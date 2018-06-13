@@ -1676,7 +1676,7 @@ _proxy_ward_plan(u3_ward* rev_u)
   u3_noun pax = u3nq(u3_blip, c3__http, c3__prox,
                      u3nc(u3k(u3A->sen), u3_nul));
   u3_noun wis = u3nq(c3__wise, u3k(rev_u->sip),
-                               u3i_words(1, (c3_w*)&rev_u->por_s),
+                               rev_u->por_s,
                                u3k(rev_u->con_u->sec));
   u3v_plan(pax, wis);
 }
