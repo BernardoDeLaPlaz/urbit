@@ -50,6 +50,7 @@
         h2o_req_t*       rec_u;             //  h2o request
         c3_w             seq_l;             //  sequence within connection
         u3_rsat          sat_e;             //  request state
+        uv_timer_t*      tim_u;             //  timeout
         struct _u3_hcon* hon_u;             //  connection backlink
         struct _u3_hreq* nex_u;             //  next in connection's list
       } u3_hreq;
@@ -146,15 +147,17 @@
         void*            tls_u;             //  client SSL_CTX*
       } u3_cttp;
 
-    /* u3_apac: ames packet, coming or going.
+    /* u3_pact: ames packet, coming or going.
     */
-      typedef struct _u3_apac {
-        struct _u3_apac* nex_u;             //  next in queue
-        c3_w             pip_w;             //  IPv4 address, to
-        c3_s             por_s;             //  IPv4 port, to
+      typedef struct _u3_pact {
+        uv_udp_send_t    snd_u;             //  udp send request
+        c3_w             pip_w;             //  target IPv4 address
+        c3_s             por_s;             //  target port
         c3_w             len_w;             //  length in bytes
-        c3_y             hun_y[0];          //  data
-      } u3_apac;
+        c3_y*            hun_y;             //  packet buffer
+        c3_y             imp_y;             //  galaxy number (optional)
+        c3_c*            dns_c;             //  galaxy fqdn (optional)
+      } u3_pact;
 
     /* u3_ames: ames networking.
     */
