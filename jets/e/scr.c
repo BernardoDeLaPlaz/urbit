@@ -5,7 +5,9 @@
 
 #include <stdint.h>
 #include <errno.h>
-#include <crypto_scrypt.h>
+#include <libscrypt.h>
+#include <sha256.h>
+
 
 int _crypto_scrypt(const uint8_t *, size_t, const uint8_t *, size_t,
     uint64_t, uint32_t, uint32_t, uint8_t *, size_t);

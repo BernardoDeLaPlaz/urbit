@@ -13,6 +13,7 @@
 #include <stdint.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <uv-common.h>
 #include <uv.h>
 #include <errno.h>
 #include <curses.h>

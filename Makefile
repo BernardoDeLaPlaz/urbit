@@ -91,9 +91,9 @@ ifeq ($(OS),bsd)
 endif
 
 ifeq ($(STATIC),yes)
-LIBS=-lssl -lcrypto -luv -lncurses /usr/local/lib/libsigsegv.a /usr/local/lib/libgmp.a $(CURLLIB) $(OSLIBS)
+LIBS=-lssl -lcrypto -luv -ldl -lrt -pthread       -lncurses /usr/local/lib/libsigsegv.a /usr/local/lib/libgmp.a $(CURLLIB) $(OSLIBS)
 else
-LIBS=-lssl -lcrypto -luv -lgmp -lncurses -lsigsegv $(CURLLIB) $(OSLIBS)
+LIBS=-lssl -lcrypto -luv -ldl -lrt -pthread -lgmp -lncurses -lsigsegv $(CURLLIB) $(OSLIBS)
 endif
 
 INCLUDE=include
@@ -117,7 +117,8 @@ CFLAGS+= $(COSFLAGS) -ffast-math \
 	$(OPTLOCALIFLAGS) \
 	$(OPENSSLIFLAGS) \
 	$(CURLINC) \
-	-I$(INCLUDE) \
+	-Ioutside/libuv/include \
+    -I$(INCLUDE) \
 	-Ioutside/anachronism/include \
 	-Ioutside/ed25519/src \
 	-Ioutside/commonmark/src \
@@ -160,9 +161,9 @@ ifdef NO_SILENT_RULES
 	@$(CC) -MM -MP $(CWFLAGS) $(CFLAGS) -MT $@ $< -MF .d/$*.d
 else
 %.o: %.c $(CORE)
-	@echo "    CC    $@"
-	@$(CC) -c $(CWFLAGS) $(CFLAGS) -o $@ $<
-	@$(CC) -MM -MP $(CWFLAGS) $(CFLAGS) -MT $@ $< -MF .d/$*.d
+	echo "    CC    $@"
+	$(CC) -c $(CWFLAGS) $(CFLAGS) -o $@ $<
+	$(CC) -MM -MP $(CWFLAGS) $(CFLAGS) -MT $@ $< -MF .d/$*.d
 endif
 
 N_OFILES=\
@@ -439,6 +440,8 @@ LIBSCRYPT=outside/scrypt/scrypt.a
 
 LIBSOFTFLOAT=outside/softfloat-3/build/Linux-386-GCC/softfloat.a
 
+LIBUV=outside/libuv/.libs/libuv.a
+
 TAGS=\
        .tags \
        .etags \
@@ -475,17 +478,20 @@ $(LIBSCRYPT):
 $(LIBSOFTFLOAT):
 	$(MAKE) -C outside/softfloat-3/build/Linux-386-GCC
 
+$(LIBUV):
+	(cd outside/libuv ; sh autogen.sh ;  ./configure ; make )
+
 $(V_OFILES): include/vere/vere.h
 
 ifdef NO_SILENT_RULES
-$(BIN)/urbit: $(LIBCOMMONMARK) $(VERE_OFILES) $(LIBED25519) $(LIBANACHRONISM) $(LIBSCRYPT) $(LIBSOFTFLOAT)
+$(BIN)/urbit: $(LIBCOMMONMARK) $(VERE_OFILES) $(LIBED25519) $(LIBANACHRONISM) $(LIBSCRYPT) $(LIBSOFTFLOAT) $(LIBUV)
 	mkdir -p $(BIN)
-	$(CLD) $(CLDOSFLAGS) -o $(BIN)/urbit $(VERE_OFILES) $(LIBED25519) $(LIBANACHRONISM) $(LIBS) $(LIBCOMMONMARK) $(LIBSCRYPT) $(LIBSOFTFLOAT)
+	$(CLD) $(CLDOSFLAGS) -o $(BIN)/urbit $(VERE_OFILES) $(LIBED25519) $(LIBANACHRONISM) $(LIBS) $(LIBCOMMONMARK) $(LIBSCRYPT) $(LIBSOFTFLOAT) $(LIBUV)
 else
-$(BIN)/urbit: $(LIBCOMMONMARK) $(VERE_OFILES) $(LIBED25519) $(LIBANACHRONISM) $(LIBSCRYPT) $(LIBSOFTFLOAT)
+$(BIN)/urbit: $(LIBCOMMONMARK) $(VERE_OFILES) $(LIBED25519) $(LIBANACHRONISM) $(LIBSCRYPT) $(LIBSOFTFLOAT) $(LIBUV)
 	@echo "    CCLD  $(BIN)/urbit"
 	@mkdir -p $(BIN)
-	@$(CLD) $(CLDOSFLAGS) -o $(BIN)/urbit $(VERE_OFILES) $(LIBED25519) $(LIBANACHRONISM) $(LIBS) $(LIBCOMMONMARK) $(LIBSCRYPT) $(LIBSOFTFLOAT)
+	@$(CLD) $(CLDOSFLAGS) -o $(BIN)/urbit $(VERE_OFILES) $(LIBED25519) $(LIBANACHRONISM) $(LIBS) $(LIBCOMMONMARK) $(LIBSCRYPT) $(LIBSOFTFLOAT) $(LIBUV)
 endif
 
 # This should start a comet or something
