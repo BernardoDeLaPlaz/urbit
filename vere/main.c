@@ -23,6 +23,8 @@
 #include "all.h"
 #include "vere/vere.h"
 
+FILE * ulog;
+
 /* _main_readw(): parse a word from a string.
 */
 static u3_noun
@@ -64,6 +66,8 @@ _main_getopt(c3_i argc, c3_c** argv)
   c3_i ch_i;
   c3_w arg_w;
 
+  u3_Host.ops_u.pot_c = NULL;
+  
   u3_Host.ops_u.abo = c3n;
   u3_Host.ops_u.bat = c3n;
   u3_Host.ops_u.gab = c3n;
@@ -82,8 +86,38 @@ _main_getopt(c3_i argc, c3_c** argv)
   u3_Host.ops_u.rep = c3n;
   u3_Host.ops_u.kno_w = DefaultKernel;
 
-  while ( (ch_i=getopt(argc, argv,"s:B:I:w:t:f:k:l:n:p:LSabcdgmqvxFMPDXR")) != -1 ) {
+  fprintf(ulog, "pre urbit-workercheck\n");
+  fflush(ulog);
+  
+  int ii = 0;
+  if (0 == strcmp(argv[0], "bin/urbit-worker")){
+    fprintf(ulog, "urbit-worker check\n");
+    fprintf(stderr, "workers don't sleep\n\r");
+    ii =1;
+  }
+  fprintf(ulog, "post urbit-workercheck\n");
+  fflush(ulog);
+  
+  fprintf(stderr, "about to sleep for gdb in main.c:__LINE__ - PID = %i\n\r", getpid());
+  while (ii != 1){
+    fprintf(stderr, "...\n\r");
+    sleep(1);
+  }
+
+  fprintf(ulog, "post sleep\n");
+  fflush(ulog);
+
+  
+  while ( (ch_i=getopt(argc, argv,"s:B:I:w:t:f:k:l:n:o:i:p:LSabcdgmqvxFMPDXR")) != -1 ) {
     switch ( ch_i ) {
+      case 'o': {  
+        u3_Host.ops_u.pot_c = strdup(optarg);
+        break;
+      }
+      case 'i': {
+        u3_Host.ops_u.pin_c = strdup(optarg);
+        break;
+      }
       case 'M': {
         u3_Host.ops_u.mem = c3y;
         break;
@@ -270,7 +304,7 @@ _main_getopt(c3_i argc, c3_c** argv)
 static void
 u3_ve_usage(c3_i argc, c3_c** argv)
 {
-#if 0
+#if 1
   c3_c *use_c[] = {"Usage: %s [options...] computer\n",
     "-c pier       Create a new urbit in pier/\n",
     "-w name       Immediately upgrade to ~name\n",
@@ -296,6 +330,8 @@ u3_ve_usage(c3_i argc, c3_c** argv)
     "-f            Fuzz testing\n",
     "-k stage      Start at Hoon kernel version stage\n",
     "-R            Report urbit build info\n",
+    "-o spec       Specify persistent storage (output). Valid specs are 'disk' (default) / 'sql' / 'found'\n",
+    "-i spec       Specify persistent storage (input).  Valid specs are 'disk' (default) / 'sql' / 'found'\n",
     "-Xwtf         Skip last event\n"};
 #else
   c3_c *use_c[] = {
@@ -427,10 +463,20 @@ _stop_exit(c3_i int_i)
   u3_pier_exit();
 }
 
+
+
 c3_i
 main(c3_i   argc,
      c3_c** argv)
 {
+  char * logpath = malloc(1024);
+  sprintf(logpath, "/tmp/urbit_log_%i", getpid());
+  ulog = fopen(logpath, "w");
+  fprintf(ulog, "start\n");
+  fflush(ulog);
+  
+
+  
   //  Detect executable purpose.
   //
   {
@@ -536,6 +582,8 @@ main(c3_i   argc,
       }
     }
 
+    
+    
     u3_king_commence();
   }
   return 0;

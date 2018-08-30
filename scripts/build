@@ -1,5 +1,10 @@
 #!/bin/bash
 
+rm -rf ./bin &> /dev/null
+mkdir ./bin &> /dev/null
 mkdir ./build &> /dev/null
-meson . ./build --buildtype=release
+meson . ./build --buildtype=debug
 ninja -C build
+cp build/urbit bin/urbit  &> /dev/null
+cp build/perstest bin/perstest  &> /dev/null
+ln -s urbit bin/urbit-worker  &> /dev/null

@@ -87,7 +87,7 @@ _serf_send(u3_noun job)
 static void
 _serf_send_replace(c3_d evt_d, u3_noun ovo)
 {
-  fprintf(stderr, "serf_send_replace %lld %s\r\n", 
+  fprintf(stderr, "serf_send_replace %ld %s\r\n", 
                   evt_d,
                   u3r_string(u3h(u3t(ovo)))); 
 
@@ -239,7 +239,7 @@ _serf_poke_boot(c3_d    evt_d,
 
   c3_assert(evt_d == u3V.evt_d + 1ULL);
   u3V.evt_d = evt_d;
-  fprintf(stderr, "serf: (%lld)| boot\r\n", evt_d);
+  fprintf(stderr, "serf: (%ld)| boot\r\n", evt_d);
 
   if ( evt_d == 5 ) {
     u3_noun eve = u3kb_flop(u3A->roe);
@@ -355,11 +355,26 @@ _serf_poke(void* vod_p, u3_noun mat)
 void
 u3_serf_boot(void)
 {
+  fprintf(ulog, "worker: serf boot %li \n", u3A->ent_d + 1);
+  fflush(ulog);
+
+
   c3_d nex_d = u3A->ent_d + 1ULL;
 
-  fprintf(stderr, "serf: play %lld\r\n", nex_d);
+
+
+
+
+
+
+
+  
+  fprintf(stderr, "serf: play %ld\r\n", nex_d);
 
   _serf_send(u3nt(c3__play, u3i_chubs(1, &nex_d), 0));
+
+  fprintf(ulog, "worker: play sent \n");
+  fflush(ulog);
 }
 
 /* u3_serf_main(): main() when run as urbit-client
@@ -367,6 +382,10 @@ u3_serf_boot(void)
 c3_i
 u3_serf_main(c3_i argc, c3_c* argv[])
 {
+  fprintf(ulog, "worker: serf_main() \n");
+  fflush(ulog);
+
+
   uv_loop_t* lup_u = uv_default_loop();
   c3_c*      dir_c = argv[1];
   c3_c*      key_c = argv[2];
@@ -376,7 +395,7 @@ u3_serf_main(c3_i argc, c3_c* argv[])
   /* load passkey
   */
   {
-    sscanf(key_c, "%llx:%llx:%llx:%llx", &u3V.key_d[0],
+    sscanf(key_c, "%lx:%lx:%lx:%lx", &u3V.key_d[0],
                                          &u3V.key_d[1],
                                          &u3V.key_d[2], 
                                          &u3V.key_d[3]);
@@ -402,6 +421,11 @@ u3_serf_main(c3_i argc, c3_c* argv[])
     uv_pipe_open(&u3V.out_u.pyp_u, 1);
   }
 
+  fprintf(ulog, "worker: pipe done \n");
+  fflush(ulog);
+
+
+  
   /* set up writing
   */
   u3V.out_u.bal_f = _serf_fail;

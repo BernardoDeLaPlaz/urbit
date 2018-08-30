@@ -157,7 +157,7 @@ jets_f_ut_src =  [
 'jets/f/ut_find.c',
 'jets/f/ut_fire.c',
 'jets/f/ut_fish.c',
-# 'jets/f/ut_fuse.c',
+'jets/f/ut_fuse.c',
 'jets/f/ut_gain.c',
 'jets/f/ut_lose.c',
 'jets/f/ut_mint.c',
@@ -201,7 +201,11 @@ outside_src = [
   './outside/jhttp/http_parser.c'
 ]
 
-vere_src = ['vere/ames.c',
+vere_src = [
+			'vere/disk.c',
+			'vere/sqlt.c',
+			'vere/fond.c',
+			'vere/ames.c',	
 #			'vere/batz.c',
 			'vere/behn.c',
 			'vere/cttp.c',
@@ -210,7 +214,6 @@ vere_src = ['vere/ames.c',
 			'vere/http.c',
 			'vere/ivory.c',
 			'vere/king.c',
-			'vere/main.c',
 			'vere/newt.c',
 			'vere/pier.c',
 			'vere/reck.c',
@@ -220,31 +223,51 @@ vere_src = ['vere/ames.c',
 			'vere/time.c',
 			'vere/unix.c',
 			'vere/walk.c'
-
 ]
 
-src_list = [
+urbit_main_src = ['vere/main.c']
+
+test_main_src = ['vere/test.c']
+
+urbit_src_list = [
 outside_src,
-vere_src, noun_src,
+urbit_main_src,
+vere_src,
+noun_src,
 jets_a_src, jets_b_src,
 jets_c_src, jets_d_src,
 jets_e_src, jets_e_ed_src, jets_f_src, jets_f_ut_src,
 jets_g_src, jets_src ]
 
-sources = []
-foreach s : src_list
-  sources += s
+test_src_list = [
+outside_src,
+test_main_src,
+vere_src,
+noun_src,
+jets_a_src, jets_b_src,
+jets_c_src, jets_d_src,
+jets_e_src, jets_e_ed_src, jets_f_src, jets_f_ut_src,
+jets_g_src, jets_src ]
+
+urbit_sources = []
+foreach s : urbit_src_list
+  urbit_sources += s
 endforeach
 
-incdir = include_directories('include/', 'outside/anachronism/include', 'subprojects/libuv/include' )
+test_sources = []
+foreach s : test_src_list
+  test_sources += s
+endforeach
+
+incdir = include_directories('include/', '/usr/include/foundationdb/', 'outside/anachronism/include', 'subprojects/libuv/include' )
 
 conf_data = configuration_data()
 conf_data.set('URBIT_VERSION', '"0.6.0"')
 
 osdet = build_machine.system()
 
-os_c_flags = ['-funsigned-char','-ffast-math']
-os_deps = []
+os_c_flags = ['-funsigned-char','-ffast-math', '-fdump-rtl-expand', '-ggdb', '-Og']
+os_deps = []  
 os_link_flags = []
 
 message('************************* ')
@@ -255,14 +278,22 @@ message(osdet)
 if osdet == 'linux'
   conf_data.set('U3_OS_linux', true)
 
+
+
   if(legacy_meson)
     pthread_dep = find_library('pthread')
   else
     pthread_dep = meson.get_compiler('c').find_library('pthread')
   endif
 
+  if(legacy_meson)
+    math_dep = find_library('m')
+  else
+    math_dep = meson.get_compiler('c').find_library('m')
+  endif
+
   ncurses_dep = dependency('ncurses')
-  os_deps = os_deps + [pthread_dep, ncurses_dep]
+  os_deps = os_deps + [pthread_dep, ncurses_dep, math_dep]
 
 elif osdet == 'darwin'
   conf_data.set('U3_OS_osx', true)
@@ -329,25 +360,45 @@ softfloat3_dep = dependency('softfloat3', version: '>=3.0.0', fallback: ['softfl
 libuv_dep = dependency('libuv', version: '>=1.8.0', fallback:['libuv', 'libuv_dep'])
 libh2o_dep = dependency('libh2o', version: '>=0.13.3', fallback: ['libh2o', 'libh2o_dep'])
 
+sqlt_dep = meson.get_compiler('c').find_library('libsqlite3', dirs:['/usr/lib/'])
+
+fond_dep = meson.get_compiler('c').find_library('libfdb_c', dirs:['/usr/lib/'])
+
 executable('urbit',
-sources : sources,
+sources : urbit_sources,
 include_directories : incdir,
 c_args : os_c_flags,
 link_args: os_link_flags,
 dependencies: [openssl_dep,
                curl_dep,
                libuv_dep,
-#			   httpparser_dep,
                libh2o_dep,
                cmark_dep,
                gmp_dep,
+			   sqlt_dep,
+			   fond_dep,
                sigsegv_dep,
                urbitscrypt_dep,
                ed25519_dep,
                murmur3_dep,
-               softfloat3_dep] + os_deps,
-install: true)
+               softfloat3_dep] + os_deps)
 
-run_command('mkdir', '-p', 'bin')
-run_command('cp', 'build/urbit', 'bin')
-run_command('ln', '-s', 'urbit', 'bin/urbit-worker')
+executable('perstest',
+sources : test_sources,
+include_directories : incdir,
+c_args : os_c_flags,
+link_args: os_link_flags,
+dependencies: [openssl_dep,
+               curl_dep,
+               libuv_dep,
+               libh2o_dep,
+               cmark_dep,
+               gmp_dep,
+			   sqlt_dep,
+			   fond_dep,
+               sigsegv_dep,
+               urbitscrypt_dep,
+               ed25519_dep,
+               murmur3_dep,
+               softfloat3_dep] + os_deps)
+
