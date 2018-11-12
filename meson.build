@@ -204,6 +204,7 @@ outside_src = [
 vere_src = [
 			'vere/disk.c',
 			'vere/sqlt.c',
+			'vere/rock.c',	
 			'vere/fond.c',
 			'vere/ames.c',	
 #			'vere/batz.c',
@@ -259,7 +260,7 @@ foreach s : test_src_list
   test_sources += s
 endforeach
 
-incdir = include_directories('include/', '/usr/include/foundationdb/', 'outside/anachronism/include', 'subprojects/libuv/include' )
+incdir = include_directories('include/', '/usr/include/foundationdb/', 'outside/anachronism/include', 'subprojects/libuv/include', 'subprojects/rocksdb/include' )
 
 conf_data = configuration_data()
 conf_data.set('URBIT_VERSION', '"0.6.0"')
@@ -358,11 +359,15 @@ ed25519_dep = dependency('ed25519', version: '>=0.1.0', fallback: ['ed25519', 'e
 murmur3_dep = dependency('murmur3', version: '>=0.1.0', fallback: ['murmur3', 'murmur3_dep'])
 softfloat3_dep = dependency('softfloat3', version: '>=3.0.0', fallback: ['softfloat3', 'softfloat3_dep'])
 libuv_dep = dependency('libuv', version: '>=1.8.0', fallback:['libuv', 'libuv_dep'])
+rocksdb_dep = dependency('rocksdb', version: '>=5.17.0', fallback:['rocksdb', 'rocksdb_dep'])
 libh2o_dep = dependency('libh2o', version: '>=0.13.3', fallback: ['libh2o', 'libh2o_dep'])
-
 sqlt_dep = meson.get_compiler('c').find_library('libsqlite3', dirs:['/usr/lib/'])
-
 fond_dep = meson.get_compiler('c').find_library('libfdb_c', dirs:['/usr/lib/'])
+
+
+snappy_dep = meson.get_compiler('c').find_library('snappy', dirs:['/usr/lib/'])
+
+bz2_dep = meson.get_compiler('c').find_library('bz2', dirs:['/usr/lib/'])
 
 executable('urbit',
 sources : urbit_sources,
@@ -377,10 +382,13 @@ dependencies: [openssl_dep,
                gmp_dep,
 			   sqlt_dep,
 			   fond_dep,
+			   rocksdb_dep,
                sigsegv_dep,
                urbitscrypt_dep,
                ed25519_dep,
                murmur3_dep,
+			   snappy_dep,
+			   bz2_dep,			   
                softfloat3_dep] + os_deps)
 
 executable('perstest',
@@ -396,9 +404,12 @@ dependencies: [openssl_dep,
                gmp_dep,
 			   sqlt_dep,
 			   fond_dep,
+			   rocksdb_dep,
                sigsegv_dep,
                urbitscrypt_dep,
                ed25519_dep,
                murmur3_dep,
+			   snappy_dep,
+			   bz2_dep,			   
                softfloat3_dep] + os_deps)
 

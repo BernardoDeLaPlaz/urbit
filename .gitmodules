@@ -25,3 +25,6 @@
 [submodule "subprojects/libuv"]
 	path = subprojects/libuv
 	url = https://github.com/BernardoDeLaPlaz/libuv
+[submodule "subprojects/rocksdb"]
+	path = subprojects/rocksdb
+	url = https://github.com/BernardoDeLaPlaz/rocksdb.git
