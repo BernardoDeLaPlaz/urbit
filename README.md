@@ -26,6 +26,7 @@ If you're doing development on Urbit, keep reading.
 - curses implementation (ncurses on Linux distributions, OS curses otherwise)
 - [Ragel](https://www.colm.net/open-source/ragel/)
 - [re2c](http://re2c.org)
+- [liblmdb-dev]()
 
 Most of these dependencies are unfortunate; we aim to drastically shrink the
 list in upcoming versions. `vere` proper makes use of GMP, OpenSSL, libcurl, and

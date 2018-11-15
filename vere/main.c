@@ -529,10 +529,10 @@ main(c3_i   argc,
   signal(SIGTSTP, _stop_exit);
 
   printf("~\n");
-  //  printf("welcome.\n");
+
   printf("urbit %s\n", URBIT_VERSION);
   printf("urbit: home is %s\n", u3_Host.dir_c);
-  // printf("vere: hostname is %s\n", u3_Host.ops_u.nam_c);
+  printf("vere: hostname is %s\n", u3_Host.ops_u.nam_c);
 
   if ( c3y == u3_Host.ops_u.dem && c3n == u3_Host.ops_u.bat ) {
     printf("urbit: running as daemon\n");
