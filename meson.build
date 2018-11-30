@@ -207,6 +207,7 @@ vere_src = [
 			'vere/rock.c',
 			'vere/lmdb.c',				
 			'vere/fond.c',
+			'vere/frag.c',
 			'vere/ames.c',	
 #			'vere/batz.c',
 			'vere/behn.c',

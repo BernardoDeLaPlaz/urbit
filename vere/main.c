@@ -97,14 +97,21 @@ _main_getopt(c3_i argc, c3_c** argv)
   }
   fprintf(ulog, "post urbit-workercheck\n");
   fflush(ulog);
+
+#define ATTACH 1
   
-  fprintf(stderr, "about to sleep for gdb in main.c:__LINE__ - PID = %i\n\r", getpid());
+  #if 1
+  fprintf(stderr, "about to sleep for gdb in main.c: - PID = %i\n\r", getpid());
   while (ii != 1){
     fprintf(stderr, "...\n\r");
     sleep(1);
   }
-
   fprintf(ulog, "post sleep\n");
+  #else 
+  fprintf(ulog, "no attach\n");    
+  #endif
+
+  
   fflush(ulog);
 
   
