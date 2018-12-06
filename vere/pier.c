@@ -219,13 +219,13 @@ _pier_abstract_write(u3_writ* wit_u)
   /* write the event blob raw */
   _pier_work_build(wit_u);
 
-
   c3_w  len_w = u3r_met(3, wit_u->mat);        /* find len of atom */
-  c3_w  hed_w = _wrze(len_w);
-  c3_y* byt_y = (c3_y*) malloc(len_w + hed_w);    /* allocate space to copy the atom, plus a header */
+
+  c3_w  hed_w = u3_frag_head_size(len_w, 0, _wrze()); /* allocate space to copy the atom, plus a header */
+  c3_y* byt_y = (c3_y*) malloc(len_w + hed_w);    
+
   u3r_bytes(0, len_w, byt_y + hed_w , wit_u->mat);      /* serialize the atom into the allocated space */
-
-
+  
   _wric(wit_u,
         wit_u->evt_d,
         byt_y,
@@ -277,23 +277,6 @@ _pier_insert(u3_pier* pir_u,
              u3_noun  job)
 {
 
-  // DEBUGGING // NOTFORCHECKIN
-  {
-
-// NOTFORCHECKIN    u3_noun ovo, job, evt;
-    // fprintf(stderr, "--------------------\n\r");
-    //    u3m_p("all", job);
-
-    // fprintf(stderr, "is a cell? %s\n\r", u3a_is_cell(job) ? "c3no" : "c3yes");
-    // u3m_p("tag", u3h(job));
-
-    // u3m_p("evt", u3h(u3t(job)));
-    //    u3m_p("job", u3t(u3t(u3t(job))));
-
-    
-    
-  }
-
   u3_writ* wit_u = c3_malloc(sizeof(u3_writ));
 
   memset(wit_u, 0, sizeof(*wit_u));
@@ -312,7 +295,6 @@ _pier_insert(u3_pier* pir_u,
   wit_u->ces_o = c3n;  /* compute submited?         */
   wit_u->ced_o = c3n;  /* compute done?             */
 
-  fprintf(stderr, "_pier_insert(): inserting evt %ld, data %u\r\n", wit_u->evt_d, wit_u -> job);    // NOTFORCHECKIN
   if ( !pir_u->ent_u ) {
     c3_assert(!pir_u->ext_u);
 
@@ -361,8 +343,6 @@ _pier_work_release(u3_writ* wit_u)
   u3_pier* pir_u = wit_u->pir_u;
   u3_lord* god_u = pir_u->god_u;
   u3_noun  vir;
-
-  // fprintf(stderr, "pier: (%lld): compute: release\r\n", wit_u->evt_d);
 
   /* advance release counter
   */
@@ -439,8 +419,6 @@ _pier_work_complete(u3_writ* wit_u,
 {
   u3_pier* pir_u = wit_u->pir_u;
   u3_lord* god_u = pir_u->god_u;
-
-  // fprintf(stderr, "pier: (%lld): compute: complete\r\n", wit_u->evt_d);
 
   god_u->dun_d += 1;
   c3_assert(god_u->dun_d == wit_u->evt_d);
@@ -644,8 +622,6 @@ _pier_load_commit(u3_pier* pir_u,
 
     ovo = u3ke_cue(u3k(mat));
 
-    // u3m_p("foo", ovo); // NOTFORCHECKIN
-
     c3_assert(c3__work == u3h(ovo));
     evt = u3h(u3t(ovo));
     job = u3k(u3t(u3t(u3t(ovo))));
@@ -713,12 +689,6 @@ _pier_load_pill(u3_pier*  pir_u,
         u3_noun tic = u3i_chubs(1, pir_u->tic_d);
         u3_noun sec = u3i_chubs(1, pir_u->sec_d);
 
-        #if 1 // NOTFORCHECKIN
-        u3m_p("** who", who); // identity
-        u3m_p("** tic", sec); // ticket
-        u3m_p("** sec", sec); // generator (security?)
-        #endif
-        
         u3_noun bot, mod, fil;
         u3r_trel(lal, &bot, &mod, &fil); /* factor trel 'lal' into 'bot', (boot?), 'mod' (module), 'fil' (filesystem) */
         pir_u->but_d = 0;
@@ -976,11 +946,7 @@ _pier_work_poke(void*   vod_p,
       if ( !wit_u || (mug_l && (mug_l != wit_u->mug_l)) ) {
         goto error;
       }
-      {
-        // XX not the right place to print an error!
-        //
-        // u3_pier_punt(0, u3k(u3t(u3t(u3t(r_jar)))));
-      }
+
       fprintf(stderr, "pier: replace: %ld\r\n", evt_d);
 
       _pier_work_replace(wit_u, u3k(r_jar), mat);
@@ -1050,9 +1016,9 @@ _pier_work_create(u3_pier* pir_u)
                    pir_u->key_d[2], 
                    pir_u->key_d[3]);
 
-    arg_c[0] = "bin/urbit-worker";      //  executable
-    arg_c[1] = pax_c;                   //  path to checkpoint directory
-    arg_c[2] = key_c;                   //  disk key, as %lx:%lx:%lx:%lx
+    arg_c[0] = "bin/urbit-worker";      /*  executable */
+    arg_c[1] = pax_c;                   /*  path to checkpoint directory */
+    arg_c[2] = key_c;                   /*  disk key, as %lx:%lx:%lx:%lx */
     arg_c[3] = 0;
 
     uv_pipe_init(u3L, &god_u->inn_u.pyp_u, 0);
@@ -1427,7 +1393,7 @@ _pier_wall(u3_noun wol)
   FILE* fil_u = u3_term_io_hija();
   u3_noun wal = wol;
 
-  fil_u = stderr;  // XX
+  fil_u = stderr;  
   while ( u3_nul != wal ) {
     _pier_tape(fil_u, u3k(u3h(wal)));
 
@@ -1457,8 +1423,6 @@ u3_pier_punt(c3_l tab_l, u3_noun tac)
   c3_l    col_l = u3h(blu);
   u3_noun cat   = tac;
 
-  //  We are calling nock here, but hopefully need no protection.
-  //
   while ( c3y == u3r_du(cat) ) {
     if ( 0 == u3A->roc ) {
       u3_noun act = u3h(cat);
@@ -1466,7 +1430,7 @@ u3_pier_punt(c3_l tab_l, u3_noun tac)
       if ( c3__leaf == u3h(act) ) {
         FILE* fil_u = u3_term_io_hija();
 
-        fil_u = stderr;   // XX
+        fil_u = stderr;   
         _pier_tape(fil_u, u3k(u3t(act)));
         putc(13, fil_u);
         putc(10, fil_u);
@@ -1552,11 +1516,11 @@ _pier_boot_make(u3_noun who,
 /* u3_pier_boot(): start the new pier system.
 */
 void
-u3_pier_boot(u3_noun who,                   //  identity
-             u3_noun tic,                   //  ticket if any
-             u3_noun sec,                   //  secret or 0
-             u3_noun pax,                   //  path to pier
-             u3_noun sys)                   //  path to boot pill (if needed)
+u3_pier_boot(u3_noun who,                   /*  identity */
+             u3_noun tic,                   /*  ticket if any */
+             u3_noun sec,                   /*  secret or 0 */
+             u3_noun pax,                   /*  path to pier */
+             u3_noun sys)                   /*  path to boot pill (if needed) */
 {
   u3_pier* pir_u;
 
