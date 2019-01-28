@@ -335,9 +335,11 @@ u3_ve_usage(c3_i argc, c3_c** argv)
     "-f            Fuzz testing\n",
     "-k stage      Start at Hoon kernel version stage\n",
     "-R            Report urbit build info\n",
-    "-o spec       Specify persistent storage (output). Valid specs are 'disk' (default) / 'sql' / 'found'\n",
-    "-i spec       Specify persistent storage (input).  Valid specs are 'disk' (default) / 'sql' / 'found'\n",
-    "-Xwtf         Skip last event\n"};
+    "-o spec       Specify persistent storage (output). Valid specs are 'fond' / 'lmdb' / 'rock'/ 'sqlt'\n",
+    "-i spec       Specify persistent storage (input).  Valid specs are 'fond' / 'lmdb' / 'rock'/ 'sqlt'\n",
+    "-Xwtf         Skip last event\n",
+    0
+  };
 #else
   c3_c *use_c[] = {
     "simple usage: \n",

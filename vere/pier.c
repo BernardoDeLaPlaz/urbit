@@ -115,7 +115,7 @@ _pier_init_read(u3_pier* pir_u, c3_c * pin_c)
     _rede = u3_disk_read_done;
     _resh = u3_disk_read_shut;    
 
-  } else if  (0 == strcmp(typ_c, "f") || 0 == strcmp(typ_c, "found")){
+  } else if  (0 == strcmp(typ_c, "f") || 0 == strcmp(typ_c, "fond")){
 
     _rein = u3_fond_read_init;
     _rere = u3_fond_read_read;
@@ -136,7 +136,7 @@ _pier_init_read(u3_pier* pir_u, c3_c * pin_c)
     _rede = u3_rock_read_done;
     _resh = u3_rock_read_shut;    
 
-  } else if  (0 == strcmp(typ_c, "s") || 0 == strcmp(typ_c, "sql")){
+  } else if  (0 == strcmp(typ_c, "s") || 0 == strcmp(typ_c, "sqlt")){
 
     _rein = u3_sqlt_read_init;
     _rere = u3_sqlt_read_read;
