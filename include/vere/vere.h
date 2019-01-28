@@ -756,11 +756,12 @@
       /* u3_pers: persistance handled
       */
         typedef struct _u3_pers {
-		  u3_disk*         log_u;               //  option 1: disk
-		  u3_sqlt *        sql_u;               //  option 2: sqlite
+		  u3_disk*         log_u;               //  option 1: disk       // NOTFORCHECKIN: change this to disk_u 
+		  u3_sqlt *        sql_u;               //  option 2: sqlite     // NOTFORCHECKIN: change this to sqlt_u 
 		  u3_fond *        fond_u;              //  option 3: foundationdb
 		  u3_rock *        rock_u;              //  option 4: rocksdb
 		  u3_lmdb *        lmdb_u;              //  option 5: lmdb
+
 		  c3_d             pos_d;               //  read position
 		} u3_pers;
 

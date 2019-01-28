@@ -22,35 +22,40 @@
 #include "all.h"
 #include "vere/vere.h"
 
-
-  /*    event handling proceeds on two parallel paths.  on the first
-  **    path, the event is processed in the child worker process (serf).
-  **    state transitions are as follows:
+  /*    Event handling proceeds via a first step
   **
-  **        generated               (event numbered and queued)
-  **        dispatched              (sent to worker)
-  **        computed                (completed by worker)
-  **        released                (output actions allowed)
+  **        generated               (writ created, event numbered, writ queued)
+  ** 
+  **    at which point, the way forward splits into two parallel paths: computation and persistence.
+  ** 
+  **    On the first path, the event is processed in the child worker
+  **    process (serf).  State transitions are as follows:
   **
-  **    we dispatch one event at a time to the worker.  we don't do
-  **    anything in parallel.
+  **        compute requested       (sent to worker)
+  **        compute complete        (completed by worker)
   **
-  **    in parallel, we try to save the event.  it goes through phases:
+  **    In parallel, we try to persist the event.  It goes through phases:
   **      
-  **        generated
   **        commit requested
   **        commit complete
   **   
-  **    the sanity constraints that connect these two paths:
+  **    These state transitions are noted in the writ.
   **
-  **        - an event can't release effects until it, and all events
-  **          preceding it, are computed and committed.
+  **    Only when BOTH parallel actions have each reached completion
+  **    may the event's effects be released.  
   **
-  **    event numbers are uint64 (c3_d) which start with 1.  we order
+  **    Additionally, an event can't release effects until it, and all
+  **    events preceding it, are computed and committed.
+  **
+  **    We dispatch one event at a time to the worker.  The worker
+  **    will not received new work until it is done with previous
+  **    work.
+  **
+  **    Event numbers are uint64 (c3_d) which start with 1.  we order
   **    events as we receive them.
   **
-  **    events are executed in order by the working process, and
-  **    committed in strict order. 
+  **    Events are executed in order by the working process, and
+  **    committed in strict order.
   **
   **    NOT TRUE RIGHT NOW : the result of computing an event can be completion (in which
   **    case we go directly to commit) or replacement (in which we
@@ -63,6 +68,7 @@
   **    which are of course exactly-once.)  ideally all your outputs
   **    are network packets or idempotent http requests!
   */
+
 
 /* input persistence pointers */ 
 typedef c3_o  (*abst_read_init_t)(u3_pier* pir_u, c3_c * pot_c);
@@ -229,7 +235,7 @@ _pier_abstract_write(u3_writ* wit_u)
   _wric(wit_u,
         wit_u->evt_d,
         byt_y,
-        byt_y + hed_w,  /* hide the header from the implimentation. This lets code that doesn't use headers be simple. */
+        byt_y + hed_w,  /* hide the header from the implementation. This lets code that doesn't use headers be simple. */
         len_w,
         NULL); 
 

@@ -35,14 +35,8 @@ for future unbundling or removal wherever possible.
 
 ## Building
 
-Our Makefile should handle the build smoothly on all supported platforms. It's
-just a simple Makefile, written by hand for GNU Make, and the most complicated
-parts of its internal machinery have to do with the varied build systems of the
-bundled libraries.
-
-Useful targets are the default `all`, `clean`, and `distclean`. The last may not
-produce an entirely clean distribution directory, and runs a bundled library's
-configure script; `git clean` may be a better option.
+1. scripts/bootstrap
+2. scripts/build
 
 The `vere` binary is produced in `bin/urbit`.
 

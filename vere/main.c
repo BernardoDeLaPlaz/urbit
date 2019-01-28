@@ -98,8 +98,6 @@ _main_getopt(c3_i argc, c3_c** argv)
   fprintf(ulog, "post urbit-workercheck\n");
   fflush(ulog);
 
-#define ATTACH 1
-  
   #if 1
   fprintf(stderr, "about to sleep for gdb in main.c: - PID = %i\n\r", getpid());
   while (ii != 1){
