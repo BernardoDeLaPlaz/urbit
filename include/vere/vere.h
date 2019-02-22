@@ -533,6 +533,12 @@
         u3_utat          tat_u;             //  control state
         struct termios   bak_u;             //  cooked terminal state
         struct termios   raw_u;             //  raw terminal state
+
+		
+		c3_y             bog_y;             // current ncurses bg color
+		c3_y             fog_y;             // current ncurses fg color
+		c3_w             eff_y;             // current ncurses effects 
+		
       } u3_utty;
 
     /* u3_trac: tracing information.
@@ -617,7 +623,15 @@
           u3_foil*         fol_u;               //  precommit file
           u3_atom          mat;                 //  jammed $work, or 0
           u3_noun          act;                 //  action list
-          struct _u3_writ* nex_u;               //  next in queue, or 0
+
+		  void*            mwh_u;               //  multi-write handle (for fond.c writes)
+		  c3_o             pes_o;               //  write submitted to initiated to persistant store 
+		  c3_o             ped_o;               //  write done
+		  c3_o             ces_o;               //  compute started
+		  c3_o             ced_o;               //  compute done
+
+
+		  struct _u3_writ* nex_u;               //  next in queue, or 0
         } u3_writ;
 
       /* u3_lord: working process controller.

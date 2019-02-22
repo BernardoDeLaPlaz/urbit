@@ -5,6 +5,17 @@
   /** Definitions.
   **/
 
+#   define c3__bog    c3_s3('b','o', 'g')  /* set background color in term */
+#   define c3__fog    c3_s3('f','o', 'g')  /* set foreground color in term */
+#   define c3__sxy    c3_s3('s','x', 'y')  /* move to x,y coordinates in term */
+#   define c3__eff    c3_s3('e','f', 'f')  /* set effect in term */
+#   define c3__pri    c3_s3('p','r', 'i')  /* print some text at current location in term */
+#   define c3__eff_bl c3_s2('b','l')        /* term effect blink */
+#   define c3__eff_br c3_s2('b','r')        /* term effect bold */
+#   define c3__eff_un c3_s2('u','n')        /* term effect underline */
+#   define c3__eff_no 0                     /* term effect normal */
+
+
 #   define c3__a      c3_s1('a')
 #   define c3__abel   c3_s4('a','b','e','l')
 #   define c3__abo    c3_s3('a','b','o')
