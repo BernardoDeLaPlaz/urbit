@@ -162,8 +162,19 @@ _sqlt_read_fragment(sqlite3 * sql_u,  /* IN: SQLite3 handle */
   return(c3y);
 }
 
+c3_o
+u3_sqlt_read_one(u3_pier* pir_u, c3_d pos_d,   c3_y ** dat_y, c3_w * len_w, void ** hand_u)
+{
+  fprintf(stderr, "NOT IMPLEMENTED\n");
+  u3m_bail(c3__fail);
+  u3_noun a;
+  return(a);
+
+}
+
+
 c3_o 
-u3_sqlt_read_read(u3_pier* pir_u, c3_y ** dat_y, c3_w *    len_w, void ** hand_u)
+u3_sqlt_read_next(u3_pier* pir_u, c3_y ** dat_y, c3_w *    len_w, void ** hand_u)
 {
   c3_o ret_o = _sqlt_read_fragment(pir_u->pin_u->sqlt_u->sql_u,
                                pir_u->pin_u->pos_d,
@@ -354,7 +365,7 @@ _sqlt_write_cast(void *opq_u)
 }
 
 void
-u3_sqlt_write_write(u3_writ* wit_u,       /* IN: writ */
+u3_sqlt_write_one(u3_writ* wit_u,       /* IN: writ */
                     c3_d pos_d,           /* IN: row id */
                     c3_y* buf_y,          /* IN: buffer (to be freed later) */
                     c3_y* byt_y,          /* IN: data (located inside buffer above, but don't worry about that) */
@@ -389,6 +400,14 @@ u3_sqlt_write_write(u3_writ* wit_u,       /* IN: writ */
 }
 
 void
+u3_sqlt_write_next(u3_writ* wit_u, c3_y* buf_y, c3_y* byt_y, c3_w  len_w, writ_test_cb test_cb)
+{
+  fprintf(stderr, "NOT IMPLEMENTED\n");
+  u3m_bail(c3__fail);
+}
+
+
+void
 u3_sqlt_write_shut(u3_pier* pir_u)
 {
   c3_w       ret_w;
@@ -399,6 +418,21 @@ u3_sqlt_write_shut(u3_pier* pir_u)
 
 }
 
+void
+u3_sqlt_write_head(u3_pier* pir_u, u3_noun head, writ_test_cb test_cb)
+{
+  fprintf(stderr, "NOT IMPLEMENTED\n");
+  u3m_bail(c3__fail);
+}
 
 
+u3_noun
+u3_sqlt_read_head(u3_pier* pir_u)
+{
+  fprintf(stderr, "NOT IMPLEMENTED\n");
+  u3m_bail(c3__fail);
 
+  u3_noun a;
+  return(a);
+
+}

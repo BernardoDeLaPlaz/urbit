@@ -35,6 +35,7 @@
 #define MAX_SIZE 65536  /* max size without fragmenting = 2^16 = 65,536 bytes before DB truncates data */
 #define MAX_RETRY 5
 
+#define HEADER_EVTD 0  /* what fake event ID do we use to signify "this is the header" ? */
 
 c3_w u3_fond_frag_size()
 {
@@ -277,11 +278,11 @@ _fond_read_frag(u3_pers *  pers_u,  /* IN: FoundationDB handle */
 void
 _fond_read_done(void * opaq);
 
-
 c3_o
-u3_fond_read_read(u3_pier* pir_u, c3_y **  dat_y, c3_w * len_w, void ** hand_u)
+_fond_read_core(u3_pier* pir_u, c3_d pos_d, c3_y **  dat_y, c3_w * len_w, void ** hand_u)
 {
-  c3_o ret_o = u3_frag_read(_fond_read_frag,
+  c3_o ret_o = u3_frag_read(pos_d,
+                            _fond_read_frag,
                             _fond_read_done,
                             MAX_SIZE,
                             pir_u->pin_u,
@@ -290,6 +291,66 @@ u3_fond_read_read(u3_pier* pir_u, c3_y **  dat_y, c3_w * len_w, void ** hand_u)
                             (mult_read_hand ** ) hand_u);
   return(ret_o);
 }
+
+
+/* read one event, random access */
+c3_o
+u3_fond_read_one(u3_pier* pir_u, c3_d pos_d,  c3_y ** dat_y, c3_w * len_w, void ** hand_u)
+{
+  if (pos_d < 1){
+    fprintf(stderr, "read_one fail ; pos_d must > 0: %ld\n", pos_d);
+    u3m_bail(c3__fail); 
+
+  }
+  return(_fond_read_core(pir_u, pos_d,  dat_y, len_w, hand_u));
+
+}
+
+/* read next event (read head is stored inside pir_u -> pin_u ) */
+c3_o
+u3_fond_read_next(u3_pier* pir_u, c3_y **  dat_y, c3_w * len_w, void ** hand_u)
+{
+  c3_o ret_o = _fond_read_core(pir_u,
+                               pir_u->pin_u->pos_d,
+                               dat_y,
+                               len_w,
+                               hand_u);
+
+  return(ret_o);
+}
+
+/* read header noun */
+u3_noun
+u3_fond_read_head(u3_pier* pir_u)
+
+{
+  c3_y * dat_y;
+  c3_w len_w;
+  void * hand_u;
+
+  c3_o ret_o = _fond_read_core(pir_u,
+                               pir_u->pin_u->pos_d,
+                               & dat_y,
+                               & len_w,
+                               & hand_u);
+
+  if (c3n == ret_o){
+    fprintf(stderr, "read_one header\n");
+    u3m_bail(c3__fail); 
+  }
+
+  u3_atom head_atom = u3i_bytes(len_w, dat_y);
+
+  u3_noun head_noun = u3qe_cue(head_atom);
+
+  u3_lmdb_read_done(hand_u);
+  
+  return(head_noun);
+
+}
+
+
+
 
 void
 _fond_read_done(void * opaq)
@@ -361,7 +422,8 @@ typedef struct _fond_writ_calb {
   
 } fond_writ_calb;
 
-void _fond_write_frag_core(u3_writ *  wit_u,
+void _fond_write_frag_core(u3_pier*   pir_u,
+                           u3_writ *  wit_u,
                            c3_y *     ked_y, /* key */
                            c3_ws      kel_ws, 
                            c3_y*      byt_y, /* data */
@@ -405,7 +467,8 @@ void _fond_write_cb(FDBFuture* fut_u, void* opq_u)
 
     fon_u->try_w ++;
 
-    _fond_write_frag_core(pwc_u->wit_u,
+    _fond_write_frag_core(pwc_u->pir_u,
+                          pwc_u->wit_u,
                                                     
                           fon_u-> ked_y,
                           fon_u-> kel_ws,
@@ -453,14 +516,15 @@ void _fond_write_cb(FDBFuture* fut_u, void* opq_u)
 }
 
 /* used by both _fond_write_part() and in retry by _fond_write_cb() */
-void _fond_write_frag_core(u3_writ *  wit_u,
+void _fond_write_frag_core(u3_pier* pir_u,
+                           u3_writ *  wit_u,
                            c3_y * ked_y, /* key */
                            c3_ws kel_ws, 
                            c3_y* byt_y, /* data */
                            c3_w  len_w,  
                            u3_pers_writ_calb * pwc_u )
 {
-  FDBDatabase *  dab_u = wit_u->pir_u->pot_u ->fond_u ->dab_u;
+  FDBDatabase *  dab_u = pir_u->pot_u ->fond_u ->dab_u;
 
 
   FDBTransaction* tra_u = NULL;
@@ -495,7 +559,8 @@ void _fond_write_frag_core(u3_writ *  wit_u,
 }
 
 void
-_fond_write_frag(u3_writ* wit_u,      /* IN: writ */
+_fond_write_frag(u3_pier* pir_u,      /* IN: pier */
+                 u3_writ* wit_u,      /* IN: writ */
                  c3_d pos_d,          /* IN: row id */
                  c3_w frg_w,          /* IN: fragment index */
                  c3_w cnt_w,          /* IN: total fragment count */
@@ -531,7 +596,8 @@ _fond_write_frag(u3_writ* wit_u,      /* IN: writ */
   pwc_u-> cbf_u = test_cb;
   pwc_u-> frg_u = mwh_u;
   
-  _fond_write_frag_core(wit_u,         /* writ */
+  _fond_write_frag_core(pir_u,         /* pier */
+                        wit_u,         /* writ */
                         ked_y, kel_ws, /* key */
                         byt_y, len_w,  /* data */
                         pwc_u);      
@@ -539,7 +605,28 @@ _fond_write_frag(u3_writ* wit_u,      /* IN: writ */
 
 
 void
-u3_fond_write_write(u3_writ* wit_u,       /* IN: writ */
+_fond_write_core(u3_pier* pir_u,       /* IN: pier */
+                 u3_writ* wit_u,       /* IN: writ */
+                 c3_d pos_d,           /* IN: row id */
+                 c3_y* buf_y,          /* IN: buffer (to be freed later) */
+                 c3_y* byt_y,          /* IN: data (located inside buffer above, but don't worry about that) */
+                 c3_w  len_w,          /* IN: data len */
+                 writ_test_cb test_cb          /* IN: void * (callback function) for testing - set NULL */
+                 )
+{
+  frag_writ(MAX_SIZE,
+            pir_u,
+            wit_u,
+            pos_d,          
+            buf_y,
+            byt_y,         
+            len_w,         
+            _fond_write_frag,   /* actual fond write function */ 
+            test_cb);
+}
+
+void
+u3_fond_write_one(u3_writ* wit_u,       /* IN: writ */
                     c3_d pos_d,           /* IN: row id */
                     c3_y* buf_y,          /* IN: buffer (to be freed later) */
                     c3_y* byt_y,          /* IN: data (located inside buffer above, but don't worry about that) */
@@ -547,14 +634,55 @@ u3_fond_write_write(u3_writ* wit_u,       /* IN: writ */
                     writ_test_cb test_cb          /* IN: void * (callback function) for testing - set NULL */
                      )
 {
-  frag_writ(MAX_SIZE,
-            wit_u,      
-            pos_d,          
-            buf_y,
-            byt_y,         
-            len_w,         
-            _fond_write_frag,   /* actual fond write function */ 
-            test_cb);
+  _fond_write_core( wit_u->pir_u,
+                    wit_u,       
+                    pos_d,           
+                    buf_y,          
+                    byt_y,          
+                    len_w,          
+                    test_cb          
+                    );
+
+}
+
+void
+u3_fond_write_next(u3_writ* wit_u,       /* IN: writ */
+                    c3_y* buf_y,          /* IN: buffer (to be freed later) */
+                    c3_y* byt_y,          /* IN: data (located inside buffer above, but don't worry about that) */
+                    c3_w  len_w,          /* IN: data len */
+                    writ_test_cb test_cb          /* IN: void * (callback function) for testing - set NULL */
+                     )
+{
+  _fond_write_core( wit_u->pir_u,
+                    wit_u,
+                    wit_u->pir_u->pin_u->pos_d,           
+                    buf_y,          
+                    byt_y,          
+                    len_w,          
+                    test_cb          
+                    );
+
+}
+
+void
+u3_fond_write_head(u3_pier* pir_u, u3_noun head, writ_test_cb test_cb)
+{
+  u3_atom head_atom = u3ke_jam(head);
+
+  c3_w  len_w = u3r_met(3, head_atom);
+  c3_w  hed_w = u3_frag_head_size(len_w, 0, u3_fond_frag_size() ); /* allocate space to copy the atom, plus a header */
+  c3_y* byt_y = (c3_y*) malloc(len_w + hed_w);
+
+  
+  u3r_bytes(0, len_w, byt_y + hed_w , head_atom);      /* serialize the atom into the allocated space */
+  
+  _fond_write_core(pir_u,
+                   (u3_writ* ) NULL,
+                   HEADER_EVTD,
+                   byt_y,
+                   byt_y + hed_w,
+                   len_w,
+                   test_cb);
 }
 
 
@@ -564,5 +692,6 @@ u3_fond_write_shut(u3_pier* pir_u)
 {
 
 }
+
 
 

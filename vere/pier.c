@@ -76,25 +76,34 @@
 #define VERBOSE 0
 
 /* input persistence pointers */
-typedef c3_o  (*abst_read_init_t)(u3_pier* pir_u, c3_c * pot_c);
-typedef c3_o  (*abst_read_read_t)(u3_pier* pir_u, c3_y ** dat_y, c3_w* len_w, void ** opaq_u);
-typedef void  (*abst_read_done_t)(void * opaq_u);
-typedef void  (*abst_read_shut_t)(u3_pier* pir_u);
+typedef c3_o    (*abst_read_init_t)(u3_pier* pir_u, c3_c * pot_c);
+typedef u3_noun (*abst_read_head_t)(u3_pier* pir_u);
+typedef c3_o    (*abst_read_one_t)(u3_pier* pir_u, c3_d pos_d, c3_y ** dat_y, c3_w* len_w, void ** opaq_u);
+typedef c3_o    (*abst_read_next_t)(u3_pier* pir_u, c3_y ** dat_y, c3_w* len_w, void ** opaq_u);
+typedef void    (*abst_read_done_t)(void * opaq_u);
+typedef void    (*abst_read_shut_t)(u3_pier* pir_u);
 
 static abst_read_init_t _rein = NULL;
-static abst_read_read_t _rere = NULL;
+static abst_read_head_t _rehe = NULL;
+static abst_read_one_t  _reon = NULL;
+static abst_read_next_t _rene = NULL;
 static abst_read_done_t _rede = NULL;  /* cleanup after read */
 static abst_read_shut_t _resh = NULL;
 
 /* output persistence pointers */
 typedef c3_o (*abst_writ_init_t)(u3_pier* pir_u, c3_c * pot_c);
 typedef c3_w (*abst_writ_size_t)();
-typedef void (*abst_writ_writ_t)(u3_writ* wit_u, c3_d pos_d, c3_y* buf_y,  c3_y* byt_y, c3_w  len_w, writ_test_cb test_cb);
+typedef void (*abst_writ_head_t)(u3_pier* pir_u, u3_noun head, writ_test_cb test_cb);
+typedef void (*abst_writ_one_t)(u3_writ* wit_u, c3_d pos_d, c3_y* buf_y,  c3_y* byt_y, c3_w  len_w, writ_test_cb test_cb);
+typedef void (*abst_writ_next_t)(u3_writ* wit_u, c3_y* buf_y,  c3_y* byt_y, c3_w  len_w, writ_test_cb test_cb);
 typedef void (*abst_writ_shut_t)(u3_pier* pir_u);
+typedef void (*abst_writ_writ_t)(u3_pier* pir_u, u3_noun head, writ_test_cb test_cb);
 
 static abst_writ_init_t _wrin = NULL;
 static abst_writ_size_t _wrze = NULL;
-static abst_writ_writ_t _wric = NULL;
+static abst_writ_head_t _wrhe = NULL;
+static abst_writ_one_t  _wron = NULL;
+static abst_writ_next_t _wrne = NULL;
 static abst_writ_shut_t _wris = NULL;
 
 /* _pier_init_read():
@@ -115,28 +124,36 @@ _pier_init_read(u3_pier* pir_u, c3_c * pin_c)
   if  (0 == strcmp(typ_c, "f") || 0 == strcmp(typ_c, "fond")){
 
     _rein = u3_fond_read_init;
-    _rere = u3_fond_read_read;
+    _rehe = u3_fond_read_head;
+    _rene = u3_fond_read_next;
+    _reon = u3_fond_read_one;
     _rede = u3_fond_read_done;
     _resh = u3_fond_read_shut;    
 
   } else if  (0 == strcmp(typ_c, "l") || 0 == strcmp(typ_c, "lmdb")){
 
     _rein = u3_lmdb_read_init;
-    _rere = u3_lmdb_read_read;
+    _rehe = u3_lmdb_read_head;
+    _rene = u3_lmdb_read_next;
+    _reon = u3_lmdb_read_one;
     _rede = u3_lmdb_read_done;
     _resh = u3_lmdb_read_shut;    
 
   } else if  (0 == strcmp(typ_c, "r") || 0 == strcmp(typ_c, "rock")){
 
     _rein = u3_rock_read_init;
-    _rere = u3_rock_read_read;
+    _rehe = u3_rock_read_head;
+    _rene = u3_rock_read_next;
+    _reon = u3_rock_read_one;
     _rede = u3_rock_read_done;
     _resh = u3_rock_read_shut;    
 
   } else if  (0 == strcmp(typ_c, "s") || 0 == strcmp(typ_c, "sqlt")){
 
     _rein = u3_sqlt_read_init;
-    _rere = u3_sqlt_read_read;
+    _rehe = u3_sqlt_read_head;
+    _rene = u3_sqlt_read_next;
+    _reon = u3_sqlt_read_one;
     _rede = u3_sqlt_read_done;
     _resh = u3_sqlt_read_shut;
 
@@ -172,28 +189,36 @@ _pier_init_writ(u3_pier* pir_u, c3_c * pot_c)
 
     _wrin = u3_fond_write_init;
     _wrze = u3_fond_frag_size;
-    _wric = u3_fond_write_write;
+    _wrhe = u3_fond_write_head;
+    _wron = u3_fond_write_one;
+    _wrne = u3_fond_write_next;    
     _wris = u3_fond_write_shut;    
 
   } else if  (0 == strcmp(typ_c, "l") || 0 == strcmp(typ_c, "lmdb")){
 
     _wrin = u3_lmdb_write_init;
     _wrze = u3_lmdb_frag_size;
-    _wric = u3_lmdb_write_write;
+    _wrhe = u3_lmdb_write_head;
+    _wron = u3_lmdb_write_one;
+    _wrne = u3_lmdb_write_next;    
     _wris = u3_lmdb_write_shut;    
 
   } else if  (0 == strcmp(typ_c, "r") || 0 == strcmp(typ_c, "rock")){
 
     _wrin = u3_rock_write_init;
     _wrze = u3_rock_frag_size;
-    _wric = u3_rock_write_write;
+    _wrhe = u3_rock_write_head;
+    _wron = u3_rock_write_one;
+    _wrne = u3_rock_write_next;    
     _wris = u3_rock_write_shut;    
 
   } else if  (0 == strcmp(typ_c, "s") || 0 == strcmp(typ_c, "sqlt")){
 
     _wrin = u3_sqlt_write_init;
     _wrze = u3_sqlt_frag_size;
-    _wric = u3_sqlt_write_write;
+    _wrhe = u3_sqlt_write_head;
+    _wron = u3_sqlt_write_one;
+    _wrne = u3_sqlt_write_next;    
     _wris = u3_sqlt_write_shut;    
 
   } else {
@@ -223,7 +248,7 @@ _pier_abstract_write(u3_writ* wit_u)
 
   u3r_bytes(0, len_w, byt_y + hed_w , wit_u->mat);      /* serialize the atom into the allocated space */
 
-  _wric(wit_u,
+  _wron(wit_u,
         wit_u->evt_d,
         byt_y,
         byt_y + hed_w,  /* hide the header from the implimentation. This lets code that doesn't use headers be simple. */
@@ -278,7 +303,7 @@ _pier_insert(u3_pier* pir_u,
   wit_u->job = job;
 
   #if VERBOSE
-    fprintf(stderr, "PIER INSERT: %lld\r\n", wit_u->evt_d);
+    fprintf(stderr, "PIER INSERT: %ld\r\n", wit_u->evt_d);
   #endif
   
   /* state machine */
@@ -339,7 +364,7 @@ _pier_work_release(u3_writ* wit_u)
   */
   {
   #if VERBOSE
-    fprintf(stderr, "PIER RELEASE: %lld\r\n", wit_u->evt_d);
+    fprintf(stderr, "PIER RELEASE: %ld\r\n", wit_u->evt_d);
   #endif
     
     c3_assert(wit_u->evt_d == (1ULL + god_u->rel_d));
@@ -437,7 +462,7 @@ _pier_work_replace(u3_writ* wit_u,
   u3_pier* pir_u = wit_u->pir_u;
   u3_lord* god_u = pir_u->god_u;
 
-  fprintf(stderr, "pier: (%lld): compute: replace\r\n", wit_u->evt_d);
+  fprintf(stderr, "pier: (%ld): compute: replace\r\n", wit_u->evt_d);
   c3_assert(god_u->sen_d == wit_u->evt_d);
 
   /* move backward in work processing
@@ -619,7 +644,7 @@ _pier_load_commit(u3_pier* pir_u,
     #endif
 
     c3_d pos_d = pir_u->pin_u->pos_d;
-    ret_o = _rere(pir_u, &buf_y, &len_w, & opaq_u); /* do actual read */
+    ret_o = _rene(pir_u, &buf_y, &len_w, & opaq_u); /* do actual read */
 
     if (ret_o == c3n){
       fprintf(stderr, "pier: load: reached end of data (...and that's OK)\r\n");
@@ -899,7 +924,7 @@ _pier_play(u3_pier* pir_u,
            c3_d     lav_d,  /* the first event not in the snapshot ; where we should start reading from persistant store */ 
            c3_l     mug_l)
 {
-  fprintf(stderr, "pier: (%lld): boot at mug %x\r\n", lav_d, mug_l);
+  fprintf(stderr, "pier: (%ld): boot at mug %x\r\n", lav_d, mug_l);
 
   _pier_work_save(pir_u);
 
@@ -923,7 +948,7 @@ _pier_work_exit(uv_process_t* req_u,
   u3_lord* god_u = (void *) req_u;
   u3_pier* pir_u = god_u->pir_u;
 
-  fprintf(stderr, "pier: exit: status %lld, signal %d\r\n", sas_i, sig_i);
+  fprintf(stderr, "pier: exit: status %ld, signal %d\r\n", sas_i, sig_i);
   uv_close((uv_handle_t*) req_u, 0);
 
   _pier_abstract_shutdown(pir_u);
@@ -1059,7 +1084,7 @@ _pier_work_poke(void*   vod_p,
           }
 
         }
-        fprintf(stderr, "pier: replace: %lld\r\n", evt_d);
+        fprintf(stderr, "pier: replace: %ld\r\n", evt_d);
 
         _pier_work_replace(wit_u, u3k(r_jar), mat);
       }
@@ -1081,7 +1106,7 @@ _pier_work_poke(void*   vod_p,
         u3_writ* wit_u = _pier_work_writ(pir_u, evt_d);
 
         if ( !wit_u ) {
-          fprintf(stderr, "poke: no writ: %lld\r\n", evt_d);
+          fprintf(stderr, "poke: no writ: %ld\r\n", evt_d);
           goto error;
         }
         _pier_work_complete(wit_u, mug_l, u3k(r_jar));
@@ -1140,7 +1165,7 @@ _pier_work_create(u3_pier* pir_u)
     pax_c = c3_malloc(1 + strlen(pir_u->pax_c));
     strcpy(pax_c, pir_u->pax_c);
 
-    sprintf(key_c, "%llx:%llx:%llx:%llx", 
+    sprintf(key_c, "%lx:%lx:%lx:%lx", 
                    pir_u->key_d[0], 
                    pir_u->key_d[1], 
                    pir_u->key_d[2], 
@@ -1150,7 +1175,7 @@ _pier_work_create(u3_pier* pir_u)
 
     arg_c[0] = bin_c;                   //  executable
     arg_c[1] = pax_c;                   //  path to checkpoint directory
-    arg_c[2] = key_c;                   //  disk key, as %llx:%llx:%llx:%llx
+    arg_c[2] = key_c;                   //  disk key, as %lx:%lx:%lx:%lx
     arg_c[3] = wag_c;                   //  runtime config
     arg_c[4] = 0;
 
@@ -1571,7 +1596,7 @@ static void
 _pier_boot_complete(u3_pier* pir_u,
                     c3_o     nuu_o)
 {
-  fprintf(stderr, "pier: (%lld): boot: %s\r\n", 
+  fprintf(stderr, "pier: (%ld): boot: %s\r\n", 
                    pir_u->god_u->dun_d,
                    (c3y == nuu_o ? "new" : "old"));
 
@@ -1836,12 +1861,18 @@ u3_pier_stay(c3_w wag_w, u3_noun pax)
 
 /* TESTING ENTRY POINTS */
 
+c3_o wrin(u3_pier* pir_u, c3_c * pot_c) { return _wrin(pir_u, pot_c); }
+c3_w wrze() { return _wrze(); }
+void wrhe(u3_pier* pir_u, u3_noun head, writ_test_cb test_cb) { return _wrhe(pir_u, head, test_cb); }
+void wrne(u3_writ* wit_u, c3_y* buf_y,  c3_y* byt_y, c3_w  len_w, writ_test_cb test_cb){ _wrne(wit_u, buf_y,  byt_y, len_w, test_cb); }
+void wron(u3_writ* wit_u, c3_d pos_d, c3_y* buf_y,  c3_y* byt_y, c3_w  len_w, writ_test_cb test_cb) { _wron(wit_u, pos_d, buf_y,  byt_y, len_w, test_cb); }
+void wris(u3_pier* pir_u) { _wris(pir_u); }
+
+
 c3_o  rein(u3_pier* pir_u, c3_c * pot_c){ return _rein(pir_u, pot_c); }
-c3_o  rere(u3_pier* pir_u, c3_y ** dat_y, c3_w* len_w, void ** opaq_u) { return _rere(pir_u, dat_y, len_w, opaq_u);}
+u3_noun  rehe(u3_pier* pir_u) { return _rehe(pir_u); } 
+c3_o  rene(u3_pier* pir_u, c3_y ** dat_y, c3_w* len_w, void ** opaq_u) { return _rene(pir_u, dat_y, len_w, opaq_u);}
+c3_o  reon(u3_pier* pir_u, c3_d pos_d, c3_y ** dat_y, c3_w* len_w, void ** opaq_u) { return _reon(pir_u, pos_d, dat_y, len_w, opaq_u); }
 void  rede(void * opaq_u) { _rede(opaq_u);}
 void  resh(u3_pier* pir_u) { _resh(pir_u); }
 
-c3_o wrin(u3_pier* pir_u, c3_c * pot_c) { return _wrin(pir_u, pot_c); }
-c3_w wrze() { return _wrze(); }
-void wric(u3_writ* wit_u, c3_d pos_d, c3_y* buf_y,  c3_y* byt_y, c3_w  len_w, writ_test_cb test_cb){ _wric(wit_u, pos_d, buf_y,  byt_y, len_w, test_cb); }
-void wris(u3_pier* pir_u) { _wris(pir_u); }

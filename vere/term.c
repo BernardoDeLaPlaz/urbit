@@ -292,7 +292,7 @@ u3_term_io_exit(void)
       if ( -1 == fcntl(uty_u->fid_i, F_SETFL, uty_u->cug_i) ) {
         c3_assert(!"exit-fcntl");
       }
-      write(uty_u->fid_i, "\r\n", 2);
+      (void) write(uty_u->fid_i, "\r\n", 2);
 
 #if 0
       if ( uty_u->tat_u.sun.sit_u ) {
@@ -766,7 +766,7 @@ _term_try_write_str(u3_utty*    uty_u,
 {
   // c3_i fid_i = uv_fileno(&uty_u->pop_u);
   c3_i fid_i = uty_u->pop_u.io_watcher.fd;  //  XX old libuv
-  write(fid_i, hun_y, strlen(hun_y));
+  (void) write(fid_i, hun_y, strlen(hun_y));
 }
 
 /* _term_try_move_left(): move the cursor left (off-thread).
@@ -1198,8 +1198,8 @@ u3_term_io_hija(void)
           perror("hija-fcntl-0");
           c3_assert(!"hija-fcntl");
         }
-        write(uty_u->fid_i, "\r", 1);
-        write(uty_u->fid_i, uty_u->ufo_u.out.el_y,
+        (void) write(uty_u->fid_i, "\r", 1);
+        (void) write(uty_u->fid_i, uty_u->ufo_u.out.el_y,
                             strlen((c3_c*) uty_u->ufo_u.out.el_y));
       }
       return stdout;

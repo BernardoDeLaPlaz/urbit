@@ -7,7 +7,7 @@
 **
 **  Usage:
 **    Run with -h for help.
-** 
+**
 **  Status (6 Dec 2018):
 **    * 'header' test hasn't been run in a while, bc it got the job done.  Still works? Who knows!
 **    * 'test' test hasn't been run in a while; kinda moved on to 'speed' as the useful tool.
@@ -16,7 +16,7 @@
 **    * fond not tested
 **    * foundationDB ... ?
 **    * lmdb has not yet been tested in cluster mode
-** 
+**
 **  BUGS:
 **     - need facility to wipe out database contents from previous runs before new run (bugs!)
 **
@@ -49,7 +49,20 @@
 #include "all.h"
 #include "vere/vere.h"
 
+
 FILE * ulog;  /* not used in this file, but needed for linking */
+
+
+
+/* _setup(): prepare for tests.
+*/
+static void
+_setup(void)
+{
+  u3m_init(c3y);
+  u3m_pave(c3y, c3n);
+}
+
 
 /****************************************/
 /***** speed test                       */
@@ -72,7 +85,7 @@ typedef struct _sqlt_write_cb_data {
 
 typedef struct _fond_write_cb_data {
   /* "true" callback data, that the callback needs for callbacky stuff */
-  
+
   u3_writ * wit_u;  /* the writ from which this fragment comes */
   c3_w     cnt_w;   /* total number of fragments */
   c3_w     frg_w;   /* index of this fragment */
@@ -80,12 +93,12 @@ typedef struct _fond_write_cb_data {
 
   /* "fake" callback data, that the callback may need for retry on certain error codes */
   c3_y * ked_y; /* key */
-  c3_ws kel_ws; 
+  c3_ws kel_ws;
   c3_y* byt_y; /* data */
-  c3_w  len_w;  
+  c3_w  len_w;
 
   writ_test_cb  cbf_u ; /* only for testing */
-  
+
 } fond_write_cb_data;
 
 
@@ -95,7 +108,7 @@ void _speed_cb(void * data)
 
   u3_writ * writ_u = sql_data -> wit_u;
   c3_d evt_d = writ_u->evt_d;
-  
+
   if (writ_u->evt_d > (TEST_SIZE - 1)){
     printf("ERROR!!!\n");
   }
@@ -114,7 +127,7 @@ int num_samples = 10;
 void _test_speed( char * init_str, c3_o frag_o, int delay)
 {
   u3_pier pir_u;
-  
+
   _pier_init_read(& pir_u, init_str);
   _pier_init_writ(& pir_u, init_str);
 
@@ -122,9 +135,9 @@ void _test_speed( char * init_str, c3_o frag_o, int delay)
   char * const_str = "abcdefghzzzzzzzzzzz";
 
   u3_writ writs[num_samples];
-  
+
   /******************** WRITE */
-  
+
   if (1)  {
 
     for (evt_d = 0 ; evt_d < num_samples ; evt_d ++){
@@ -133,20 +146,20 @@ void _test_speed( char * init_str, c3_o frag_o, int delay)
       /* alloc space to hold the string. Prepend with a fragment header of appropriate size. */
 
       c3_w  len_w = strlen(const_str) + 20;
-      
+
       /* copied from pier.c   _pier_abstract_write()  */
       c3_w  hed_w = u3_frag_head_size(len_w, 0, wrze()); /* allocate space to copy the atom, plus a header */
-      c3_y * buf_y = (c3_y*) malloc(len_w + hed_w);    
+      c3_y * buf_y = (c3_y*) malloc(len_w + hed_w);
       c3_y * str_y = buf_y + hed_w;
-      
-      
+
+
       sprintf((char *) str_y, "%ld-%s", evt_d, const_str);
 
       len_w = strlen((char *) str_y);
-        
-      
+
+
       writs[evt_d].pir_u = & pir_u;
-      writs[evt_d].pes_o = c3n; 
+      writs[evt_d].pes_o = c3n;
       writs[evt_d].ped_o = c3n;
       writs[evt_d].ces_o = c3n;
       writs[evt_d].ced_o = c3n;
@@ -159,12 +172,12 @@ void _test_speed( char * init_str, c3_o frag_o, int delay)
       }
 
       /* write */
-      wric(& writs[evt_d],
+      wron(& writs[evt_d],
            evt_d,
            (c3_y *) buf_y,
            (c3_y *) str_y,
            len_w,
-           _speed_cb);  
+           _speed_cb);
 
 
       /* delay before next write, so that we don't stack up writes and confuse bandwidth limits for latency */
@@ -200,7 +213,7 @@ void _test_speed( char * init_str, c3_o frag_o, int delay)
           break;
         }
       }
-      
+
       fprintf(stderr, "    all = %i\n", all);
       if (1 == all){
         goto done;
@@ -215,13 +228,13 @@ void _test_speed( char * init_str, c3_o frag_o, int delay)
         fprintf(stderr, "      * evt %ld\n", writs[jj].evt_d);
       }
     }
-    
+
   done:
-    fprintf(stderr, "    done\n");    
+    fprintf(stderr, "    done\n");
 
   }
-  
-  
+
+
   /* ******************** CALCULATE  */
   {
     printf("DOING MATH %ld\n", evt_d);
@@ -235,15 +248,15 @@ void _test_speed( char * init_str, c3_o frag_o, int delay)
       printf("evt_d %ld   delta: %ld ms\n", evt_d, (diff_ns / (1000  * 1000) ));
       total_diff_ms += (diff_ns / (1000 * 1000) );
     }
-  
+
     long mean_diff_ms = (0 == num_samples) ? 0 : total_diff_ms / num_samples;
-  
+
     printf("mean delta: %ld ms\n", mean_diff_ms);
   }
 
 
 
-  
+
   /* ******************** READ*/
 
   if (1) {
@@ -257,9 +270,9 @@ void _test_speed( char * init_str, c3_o frag_o, int delay)
       pir_u.pin_u->pos_d = loop;
 
       /* read */
-      c3_o ret_o = rere(& pir_u, & dat_y, & len_w, & opaq_u);
+      c3_o ret_o = rene(& pir_u, & dat_y, & len_w, & opaq_u);
       if (c3n == ret_o){
-        printf("read failure for %ld - no read found\n", pir_u.pin_u -> pos_d); 
+        printf("read failure for %ld - no read found\n", pir_u.pin_u -> pos_d);
       } else {
         char * disp = (char *) malloc(len_w + 1);
         memcpy(disp, (char *) dat_y, len_w);
@@ -271,7 +284,7 @@ void _test_speed( char * init_str, c3_o frag_o, int delay)
       char * gold_str = (char *) malloc(100);
       sprintf(gold_str, "%i-%s", loop, const_str);
 
-    
+
       if (len_w != strlen(gold_str) ){
         fprintf(stderr, "  ** FAIL: wrote %ld bytes, read %i bytes \n", strlen(gold_str), len_w);
         err_cnt ++;
@@ -289,7 +302,7 @@ void _test_speed( char * init_str, c3_o frag_o, int delay)
   }
   resh(& pir_u);
   wris(& pir_u);
-  
+
 }
 
 void _test_speed_disk(int delay)
@@ -342,12 +355,12 @@ void _test_write(int len_w,  u3_pier* pir_u)
 
   wit_u->evt_d = len_w;
 
-  c3_w hed_w = u3_frag_head_size(len_w, 
-                                 1, 
+  c3_w hed_w = u3_frag_head_size(len_w,
+                                 1,
                                 u3_lmdb_frag_size());
 
 
-  
+
   c3_c * str_c = (c3_c *) malloc(len_w + 1 + hed_w);
   int ss = 0;
   int tt;
@@ -365,11 +378,11 @@ void _test_write(int len_w,  u3_pier* pir_u)
     }
   }
  write_done:
-    
-    
+
+
   str_c[index] = 0;
 
-  wric(wit_u, wit_u->evt_d, (c3_y *) str_c,  (c3_y *) str_c + hed_w, len_w, NULL);
+  wron(wit_u, wit_u->evt_d, (c3_y *) str_c,  (c3_y *) str_c + hed_w, len_w, NULL);
 }
 
 void _test_read( u3_pier* pir_u, c3_y * expect_y)
@@ -378,13 +391,13 @@ void _test_read( u3_pier* pir_u, c3_y * expect_y)
     c3_w  len_w;
     void * opaq_u;
 
-    c3_o ret_o = rere(pir_u, & dat_y, & len_w, & opaq_u);
+    c3_o ret_o = rene(pir_u, & dat_y, & len_w, & opaq_u);
 
     /* fprintf(stderr, "out: %s\n\r", dat_y);*/
     if (c3n == ret_o){
-      printf("read failure for %ld - no read found\n", pir_u ->pin_u -> pos_d);          
+      printf("read failure for %ld - no read found\n", pir_u ->pin_u -> pos_d);
     } else if (0 == strcmp((char*) dat_y, (char*) expect_y)){
-      printf("success for %ld\n", pir_u ->pin_u -> pos_d);      
+      printf("success for %ld\n", pir_u ->pin_u -> pos_d);
     } else {
       printf("error for %ld\n", pir_u ->pin_u -> pos_d);
       printf("  expected size %ld / actual size %ld\n", strlen( (char *) expect_y), strlen( (char *) dat_y));
@@ -400,7 +413,7 @@ void _test_read( u3_pier* pir_u, c3_y * expect_y)
 
 void _test_core(  u3_pier* pir_u)
 {
-  
+
   _test_write(4, pir_u);
   _test_write(10, pir_u);
   _test_write(100, pir_u);
@@ -423,10 +436,10 @@ void _test_core(  u3_pier* pir_u)
 
   pir_u ->pin_u -> pos_d = 4;
   _test_read(pir_u, (c3_y * ) "abb");
-    
+
   pir_u ->pin_u -> pos_d = 10;
   _test_read(pir_u, (c3_y * ) "abbcccddd");
-     
+
   pir_u ->pin_u -> pos_d = 100;
   _test_read(pir_u, (c3_y *) "abbcccddddeeeeeffffffggggggghhhhhhhhiiiiiiiiijjjjjjjjjjkkkkkkkkkkkllllllllllllmmmmmmmmmmmmmnnnnnnnn");
 
@@ -436,7 +449,7 @@ void _test_fond()
 {
   printf("******************** fond\n");
   u3_pier pir_u;
-  
+
   _pier_init_read(& pir_u, "f");
   _pier_init_writ(& pir_u, "f");
 
@@ -448,7 +461,7 @@ void _test_lmdb()
 {
   printf("******************** lmdb\n");
   u3_pier pir_u;
-  
+
   _pier_init_read(& pir_u, "l");
   _pier_init_writ(& pir_u, "l");
 
@@ -461,7 +474,7 @@ void _test_sqlt()
 {
   printf("******************** sqlt\n");
   u3_pier pir_u;
-    
+
   _pier_init_read(& pir_u, "s");
   _pier_init_writ(& pir_u, "s");
 
@@ -479,20 +492,20 @@ void _test_width(u3_pier* pir_u)
   for (exp_w = 9; exp_w < 24 ; exp_w ++){
 
     c3_w wid_w = (c3_w) pow((double) 2, (double) exp_w);
-        
+
     /* calc header size*/
-    c3_w max_w = wrze(); 
+    c3_w max_w = wrze();
     c3_w hed_w = u3_frag_head_size(wid_w, 1, max_w);
-    
+
     /* write*/
     fprintf(stderr, "--------------------\n");
     fprintf(stderr, "2^%i = width %i\n", exp_w, wid_w);
     c3_y * buf_y = (c3_y *) malloc(wid_w + hed_w);
     c3_y * byt_y = buf_y + hed_w;
-    
+
     /* pick fill character */
     c3_y chr_y = 'a' + exp_w - 1;
-    
+
     memset(buf_y, (int) 0, (size_t) hed_w);         /* zero out header*/
     memset(byt_y, (int) chr_y, (size_t) wid_w); /* fill body with character*/
     byt_y[ (wid_w > WIDTH_DISPLAY_LEN ? WIDTH_DISPLAY_LEN : wid_w) - 1 ] = 0; /* terminator at pos 10 */
@@ -501,18 +514,18 @@ void _test_width(u3_pier* pir_u)
     for (ii = 0; ii < ( (wid_w > WIDTH_DISPLAY_LEN ? WIDTH_DISPLAY_LEN : wid_w) - 1 )  ; ii++){
       byt_y[ii] = 'a' + ii;
     }
-    
+
     u3_writ wit_u;
     wit_u.pir_u = pir_u;
-    wit_u.pes_o = c3n; 
+    wit_u.pes_o = c3n;
     wit_u.ped_o = c3n;
     wit_u.ces_o = c3n;
     wit_u.ced_o = c3n;
     wit_u.evt_d = exp_w;
 
-    wric(& wit_u, wit_u.evt_d, buf_y, byt_y, wid_w, NULL);  
+    wron(& wit_u, wit_u.evt_d, buf_y, byt_y, wid_w, NULL);
 
-    
+
     /* wait for write to complete*/
 
     c3_w cnt_w = 0;
@@ -527,17 +540,17 @@ void _test_width(u3_pier* pir_u)
     /*    free(str_y); // free only after write has succeeded - this line is removed bc if present, get segv later*/
 
     /* read*/
-    
-    fprintf(stderr, "about to read; wit.ped_o == %s\n", ((c3n == wit_u.ped_o) ?  "n" : "y")  ); 
-    
+
+    fprintf(stderr, "about to read; wit.ped_o == %s\n", ((c3n == wit_u.ped_o) ?  "n" : "y")  );
+
     c3_y * dat_y;
     c3_w len_w;
     void * opaq_u;
 
     pir_u->pin_u->pos_d = exp_w;
 
-    
-    c3_o  ret_o = rere(pir_u, & dat_y, & len_w, & opaq_u) ;
+
+    c3_o  ret_o = rene(pir_u, & dat_y, & len_w, & opaq_u) ;
     fprintf(stderr, "read success? %s\n", c3y == ret_o ? "yes" : "no");
     if ( c3n == ret_o ){
       fprintf(stderr, "  ** FAIL\n");
@@ -563,9 +576,9 @@ void _test_width(u3_pier* pir_u)
       exit(-1);
 
     }
-    
+
     rede(opaq_u);
-    
+
   }
 }
 
@@ -631,7 +644,7 @@ void _head_dump(c3_y * buf_y)
 
 }
 
-void _head_test()
+void _fraghead_test()
 {
   c3_y buf_y[1024];
   bzero((void *) buf_y, 1024);
@@ -673,8 +686,72 @@ void _head_test()
 
   }
 
-  
+
 }
+
+void _loghead_test(char * driver_str_orig)
+{
+  char * driver_str = strdup(driver_str_orig);
+  printf("******************** loghead test %s\n", driver_str);
+  u3_pier pir_u;
+
+  _pier_init_read(& pir_u, driver_str);
+  _pier_init_writ(& pir_u, driver_str);
+
+  
+  /*           .
+   *        /    \
+   *     2 first  .  3
+   *             / \
+   *         6 second  7 third
+   */
+
+  // write
+  //
+  u3_noun first = 1; // u3i_string("first");
+  u3_noun second = 2; // u3i_string("second");
+  u3_noun third = 3; // u3i_string("third");
+  u3_noun head_in = u3i_trel(first, second, third);
+
+  wrhe(& pir_u, head_in, (writ_test_cb) NULL);
+
+  volatile int jj=0;
+  while (1 != jj){
+    fprintf(stderr, "...sleep...\n\r");
+    sleep(1);
+  }
+
+  printf("sleep done!!!!!!!!!!!!!\n");
+  // read
+
+  u3_noun head_out = rehe(& pir_u);
+  u3_noun a, b, c;
+
+  if ( c3n == u3r_mean(head_out, 2, &a, 0) ){
+    printf("loghead_test error 1\n");
+  } else {
+    printf("loghead_test success 1\n");
+  }
+
+  if ( c3n == u3r_mean(head_out, 6, &b, 0) ){
+    printf("loghead_test error 2\n");
+  } else {
+    printf("loghead_test success 2\n");
+  }
+
+  if ( c3n == u3r_mean(head_out, 7, &c, 0) ){
+    printf("loghead_test error 3\n");
+  } else {
+    printf("loghead_test success 3\n");
+  }
+
+  /* if (0 != strcmp( u3r_string(a), "first")){ */
+  /*   printf("loghead_test error 1 b\n"); */
+  /* } */
+
+
+}
+
 
 /******************************************/
 /****** main*/
@@ -688,7 +765,7 @@ void usage()
                    "-d <x>        specify a delay of x ms after each write (helps disambiguate bandwidth from latency)",
                    "-n <x>        specify number of iterations",
                    "-p { d | f | l | r |s }  specify persistece backend (defaults to 'f')",
-                   "-t { h | s | t | w }  test type (header / speed / basic test / width).  Defaults to speed",
+                   "-t { f | h | s | t | w  }  test type ([f]rag header / log [h]eader / [s]peed / basic [t]est / [w]idth).  Defaults to speed",
                    0
   };
 
@@ -705,41 +782,13 @@ main(c3_i   argc,
 {
   int attach = 0 ;
   int delay = 0;
-  char pers_backend = 'f';
-  char test_type = 's';
   c3_i ch_i;
+  char pers_backend = 'f';  // default value: foundation DB
+  char test_type = 's';     // default value: speed test
 
-  printf("here-1\n");
-  while ( (ch_i=getopt(argc, argv,"had:n:p:t:")) != -1 ) {
-    switch ( ch_i ) {
-    case 'h': {  
-      usage();
-      return(0);
-    }
-    case 'a': {  
-      attach = 1;
-      break;
-    }
-    case 'd': {
-      delay = atoi(optarg);
-      break;
-    }
-    case 'p': {
-      pers_backend = optarg[0];
-      break;
-    }
-    case 'n': {
-      printf("n: %s\n", optarg); 
-      num_samples = atoi(optarg);
-      break;
-    }
-    case 't': {
-      test_type = optarg[0];
-      break;
-    }
-
-    }  
-  }
+  char *  pers_backend_str = malloc(16); // in string form, so we can pass it to tests, print it out, etc.
+  
+  attach = 1;
   if (1 == attach){
     fprintf(stderr, "******************************\n");
     fprintf(stderr, "about to sleep for gdb in main.c - PID = %i\n\r", getpid());
@@ -752,14 +801,59 @@ main(c3_i   argc,
     fprintf(stderr, "-a was not specified ; no attach \n\r");
   }
 
+  if (1 == argc){
+    usage();
+  }
+
+  while ( (ch_i=getopt(argc, argv,"had:n:p:t:")) != -1 ) {
+    switch ( ch_i ) {
+    case 'h': {
+      usage();
+      return(0);
+    }
+    case 'a': {
+      attach = 1;
+      break;
+    }
+    case 'd': {
+      delay = atoi(optarg);
+      break;
+    }
+    case 'p': {
+      pers_backend = optarg[0];
+      pers_backend_str[0] = pers_backend;
+      pers_backend_str[1] = 0;
+
+      break;
+    }
+    case 'n': {
+      printf("n: %s\n", optarg);
+      num_samples = atoi(optarg);
+      break;
+    }
+    case 't': {
+      test_type = optarg[0];
+      break;
+    }
+
+    }
+  }
+
   u3C.dir_c = "~zod";
+  _setup();
 
-  /* test header ==================== */
 
-  if ('h' == test_type) {
-    _head_test();
-  } 
-  
+  /* frag header ==================== */
+
+  if ('f' == test_type) {
+    _fraghead_test();
+  }
+
+  /* log header ==================== */
+  else if ('h' == test_type) {
+    _loghead_test(pers_backend_str);
+  }
+
   /* width ==================== */
   else if ('w' == test_type) {
     if ('d' == pers_backend){
@@ -821,8 +915,28 @@ main(c3_i   argc,
 
   }
 
+  /* test ==================== */
+  else if ('t' == test_type) {
+
+    if ('d' == pers_backend){
+      exit(-1);
+    } else if ('f' == pers_backend){
+      exit(-1);
+    } else if ('l' == pers_backend){
+      _test_lmdb();
+    } else if ('r' == pers_backend){
+      exit(-1);
+    } else if ('s' == pers_backend){
+      _test_sqlt();
+    } else {
+      printf("unsupported options\n");
+      exit(-1);
+    }
+
+  }
+
   else {
     usage();
     return(-1);
   }
-}  
+}

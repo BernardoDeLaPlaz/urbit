@@ -137,13 +137,14 @@ c3_w _frag_head_read(c3_y * buf_y, c3_w * dex_w, c3_w * tot_w)
    returns: loob: "all parts of a fragment found?"
 
 */
-c3_o u3_frag_read(_frag_read read_u,
-               _frag_done done_u,
-               c3_w max_w,
-               u3_pers* pers_u,
-               c3_y **  dat_y,
-               c3_w * len_w,
-               mult_read_hand ** mrh_u)
+c3_o u3_frag_read(c3_d       pos_d,       /* position to write */
+                  _frag_read read_u,      /* pointer to function that reads 1 frag */
+                  _frag_done done_u,      /* pointer to function that cleans up after 1 read */
+                  c3_w max_w,             /* max size (in bytes) that 1 fragment can hold */
+                  u3_pers* pers_u,        /* pointer to persistence handle */
+                  c3_y **  dat_y,         /* data to write */
+                  c3_w * len_w,           /* length of data to write */
+                  mult_read_hand ** mrh_u) /* multi-read handle to coordinate frag reads */            
 {
   /* set up multi read handle (good for a noun that spans 1 fragment, or many)  */
   * mrh_u = (mult_read_hand *) c3_malloc (sizeof (mult_read_hand));
@@ -156,7 +157,7 @@ c3_o u3_frag_read(_frag_read read_u,
   void * srh_u; /* read handle for single read */
 
   c3_o ret_o =  read_u(pers_u,            /* IN: db handle */
-                       pers_u ->pos_d,    /* IN: row id */
+                       pos_d,             /* IN: row id */
                        0,                 /* IN: fragment id */
                        & dt1_y,           /* OUT: set pointer to data */
                        & ln1_w,           /* OUT: set len of data */
@@ -275,6 +276,7 @@ c3_o u3_frag_read_done(mult_read_hand * mrh_u,
 
 
 void frag_writ(c3_w max_w,          /* IN: max fragment size (0 == infinite ) */
+               u3_pier* pir_u,      /* IN: pier */
                u3_writ* wit_u,      /* IN: writ */
                c3_d pos_d,          /* IN: row id */
                c3_y* buf_y,         /* IN: frag data (with space for header) */
@@ -322,7 +324,8 @@ void frag_writ(c3_w max_w,          /* IN: max fragment size (0 == infinite ) */
   }
 
   /* write fragment into db */
-  wri_u(wit_u,             /* IN: writ */
+  wri_u(pir_u,             /* IN: pier */
+        wit_u,             /* IN: writ */
         pos_d,             /* IN: row id */
         0,                 /* IN: frag id */
         cnt_w,             /* IN: num frags */
@@ -355,7 +358,8 @@ void frag_writ(c3_w max_w,          /* IN: max fragment size (0 == infinite ) */
 
     memcpy(frag_y + hed_w, byt_y, frg_len_w);
 
-    wri_u(wit_u,             /* IN: writ */
+    wri_u(pir_u,
+          wit_u,             /* IN: writ */
           pos_d,             /* IN: row id */
           frg_w,             /* IN: fragment index */
           cnt_w,             /* IN: num frags */
@@ -428,7 +432,9 @@ c3_o u3_frag_write_done(c3_w frg_w,
   }
 
   /* 1: mark write as 100% complete */
-  wit_u->ped_o = c3y; 
+  if (wit_u){
+    wit_u->ped_o = c3y;
+  }
 
 
   /* 2: clean up the shared multi-write handle */  

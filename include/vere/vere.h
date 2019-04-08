@@ -1376,13 +1376,14 @@
      (* _frag_done)(void * opaq_u);
 
 
-     c3_o u3_frag_read(_frag_read read_u,
-                    _frag_done done_u,
-                    c3_w max_w,
-                    u3_pers* pers_u,
-                    c3_y **  dat_y,
-                    c3_w * len_w,
-                    mult_read_hand ** hand_u);
+     c3_o u3_frag_read(c3_d              pos_d,     /* position to write */                                      
+					   _frag_read        read_u,	/* pointer to function that reads 1 frag */                  
+					   _frag_done        done_u,	/* pointer to function that cleans up after 1 read */        
+					   c3_w              max_w,		/* max size (in bytes) that 1 fragment can hold */           
+					   u3_pers*          pers_u,	/* pointer to persistence handle */                          
+					   c3_y **           dat_y,		/* data to write */                                          
+					   c3_w *            len_w,		/* length of data to write */                                
+					   mult_read_hand ** hand_u);	/* multi-read handle to coordinate frag reads */            
 
      c3_o u3_frag_read_done(mult_read_hand * mrh_u, _frag_done done_u);
 
@@ -1397,7 +1398,7 @@
       } u3_pers_frag;
 
       typedef struct _u3_pers_writ_calb {
-
+		u3_pier*         pir_u;     /* pier */
         u3_writ *        wit_u;        /* the writ from which this fragment comes */
 
         c3_w             cnt_w;        /* total number of fragments (OPTIONAL) - used by frag layer */
@@ -1410,9 +1411,10 @@
       } u3_pers_writ_calb;
 
 
-
+    /* prototype of write-one-fragment function that any db module that uses fragmenting must implement */
      typedef void
-     (* _writ_frag)(u3_writ* wit_u,      /* IN: writ */
+     (* _writ_frag)(u3_pier* pir_u,      /* IN: pier */
+					u3_writ* wit_u,      /* IN: writ */
                     c3_d pos_d,          /* IN: row id */
                     c3_w frg_w,          /* IN: frag id */
                     c3_w cnt_w,          /* IN: frag id */
@@ -1423,6 +1425,7 @@
                     );
 
      void frag_writ(c3_w max_w,          /* IN: max fragment size */
+					u3_pier* pir_u,      /* IN: pier */
                     u3_writ* wit_u,      /* IN: writ */
                     c3_d pos_d,          /* IN: row id */
                     c3_y* buf_y,         /* IN: frag data (with space for header) */
@@ -1467,15 +1470,26 @@ c3_o u3_frag_write_done(c3_w frg_w,
         u3_lmdb_read_init(u3_pier* pir_u, c3_c * sto_c);
 
         c3_o
-        u3_disk_read_read(u3_pier* pir_u,  c3_y ** dat_y, c3_w * len_w, void ** hand_u);
+        u3_disk_read_next(u3_pier* pir_u,  c3_y ** dat_y, c3_w * len_w, void ** hand_u);
         c3_o
-        u3_sqlt_read_read(u3_pier* pir_u,  c3_y ** dat_y, c3_w * len_w, void ** hand_u);
+        u3_sqlt_read_next(u3_pier* pir_u,  c3_y ** dat_y, c3_w * len_w, void ** hand_u);
         c3_o
-        u3_fond_read_read(u3_pier* pir_u,  c3_y ** dat_y, c3_w * len_w, void ** hand_u);
+        u3_fond_read_next(u3_pier* pir_u,  c3_y ** dat_y, c3_w * len_w, void ** hand_u);
         c3_o
-        u3_rock_read_read(u3_pier* pir_u,  c3_y ** dat_y, c3_w * len_w, void ** hand_u);
+        u3_rock_read_next(u3_pier* pir_u,  c3_y ** dat_y, c3_w * len_w, void ** hand_u);
         c3_o
-        u3_lmdb_read_read(u3_pier* pir_u,  c3_y ** dat_y, c3_w * len_w, void ** hand_u);
+        u3_lmdb_read_next(u3_pier* pir_u,  c3_y ** dat_y, c3_w * len_w, void ** hand_u);
+
+        c3_o
+        u3_disk_read_one(u3_pier* pir_u, c3_d pos_d,   c3_y ** dat_y, c3_w * len_w, void ** hand_u);
+        c3_o
+        u3_sqlt_read_one(u3_pier* pir_u, c3_d pos_d,   c3_y ** dat_y, c3_w * len_w, void ** hand_u);
+        c3_o
+        u3_fond_read_one(u3_pier* pir_u, c3_d pos_d,   c3_y ** dat_y, c3_w * len_w, void ** hand_u);
+        c3_o
+        u3_rock_read_one(u3_pier* pir_u, c3_d pos_d,   c3_y ** dat_y, c3_w * len_w, void ** hand_u);
+        c3_o
+        u3_lmdb_read_one(u3_pier* pir_u, c3_d pos_d,   c3_y ** dat_y, c3_w * len_w, void ** hand_u);
 
         void
         u3_disk_read_done(void * hand_u);
@@ -1487,6 +1501,19 @@ c3_o u3_frag_write_done(c3_w frg_w,
         u3_rock_read_done(void * hand_u);
         void
         u3_lmdb_read_done(void * hand_u);
+
+        /*  read header.  Header is a stand-alone object (not an event), has no sequence number, there can be only one. 
+         */
+        u3_noun
+        u3_disk_read_head(u3_pier* pir_u);
+        u3_noun
+        u3_sqlt_read_head(u3_pier* pir_u);
+        u3_noun
+        u3_fond_read_head(u3_pier* pir_u);
+        u3_noun
+        u3_rock_read_head(u3_pier* pir_u);
+        u3_noun
+        u3_lmdb_read_head(u3_pier* pir_u);
 
         void
         u3_disk_read_shut(u3_pier* pir_u);
@@ -1532,6 +1559,20 @@ c3_o u3_frag_write_done(c3_w frg_w,
 
         typedef void (*writ_test_cb)(void*);  /* a callback used in testing */
 
+        /*  write header.  Header is a stand-alone object (not an event), has no sequence number, there can be only one. 
+         */
+        void
+        u3_disk_write_head(u3_pier* pir_u, u3_noun head, writ_test_cb test_cb);
+        void
+        u3_sqlt_write_head(u3_pier* pir_u, u3_noun head, writ_test_cb test_cb);
+        void
+        u3_fond_write_head(u3_pier* pir_u, u3_noun head, writ_test_cb test_cb);
+        void
+        u3_rock_write_head(u3_pier* pir_u, u3_noun head, writ_test_cb test_cb);
+        void
+        u3_lmdb_write_head(u3_pier* pir_u, u3_noun head, writ_test_cb test_cb);
+
+
         /*  conforming write_write() functions must do three things:
               1) write to persistent store     [ action ]
               2) on success,set
@@ -1539,15 +1580,27 @@ c3_o u3_frag_write_done(c3_w frg_w,
               3) free(buf_y)                   [ cleanup ]
         */
         void
-        u3_disk_write_write(u3_writ* wit_u, c3_d pos_d, c3_y* buf_y, c3_y* byt_y, c3_w  len_w, writ_test_cb test_cb);
+        u3_disk_write_one(u3_writ* wit_u, c3_d pos_d, c3_y* buf_y, c3_y* byt_y, c3_w  len_w, writ_test_cb test_cb);
         void
-        u3_sqlt_write_write(u3_writ* wit_u, c3_d pos_d, c3_y* buf_y, c3_y* byt_y, c3_w  len_w, writ_test_cb test_cb);
+        u3_sqlt_write_one(u3_writ* wit_u, c3_d pos_d, c3_y* buf_y, c3_y* byt_y, c3_w  len_w, writ_test_cb test_cb);
         void
-         u3_fond_write_write(u3_writ* wit_u, c3_d pos_d, c3_y* buf_y, c3_y* byt_y, c3_w  len_w, writ_test_cb test_cb);
+         u3_fond_write_one(u3_writ* wit_u, c3_d pos_d, c3_y* buf_y, c3_y* byt_y, c3_w  len_w, writ_test_cb test_cb);
         void
-         u3_rock_write_write(u3_writ* wit_u, c3_d pos_d, c3_y* buf_y, c3_y* byt_y, c3_w  len_w, writ_test_cb test_cb);
+         u3_rock_write_one(u3_writ* wit_u, c3_d pos_d, c3_y* buf_y, c3_y* byt_y, c3_w  len_w, writ_test_cb test_cb);
         void
-         u3_lmdb_write_write(u3_writ* wit_u, c3_d pos_d, c3_y* buf_y, c3_y* byt_y, c3_w  len_w, writ_test_cb test_cb);
+         u3_lmdb_write_one(u3_writ* wit_u, c3_d pos_d, c3_y* buf_y, c3_y* byt_y, c3_w  len_w, writ_test_cb test_cb);
+
+        void
+        u3_disk_write_next(u3_writ* wit_u, c3_y* buf_y, c3_y* byt_y, c3_w  len_w, writ_test_cb test_cb);
+        void
+        u3_sqlt_write_next(u3_writ* wit_u, c3_y* buf_y, c3_y* byt_y, c3_w  len_w, writ_test_cb test_cb);
+        void
+         u3_fond_write_next(u3_writ* wit_u, c3_y* buf_y, c3_y* byt_y, c3_w  len_w, writ_test_cb test_cb);
+        void
+         u3_rock_write_next(u3_writ* wit_u, c3_y* buf_y, c3_y* byt_y, c3_w  len_w, writ_test_cb test_cb);
+        void
+         u3_lmdb_write_next(u3_writ* wit_u, c3_y* buf_y, c3_y* byt_y, c3_w  len_w, writ_test_cb test_cb);
+
 
         void
         u3_disk_write_shut(u3_pier* pir_u);
@@ -1563,14 +1616,18 @@ c3_o u3_frag_write_done(c3_w frg_w,
 /* TESTING ENTRY POINTS */
 
 c3_o  rein(u3_pier* pir_u, c3_c * pot_c);
-c3_o  rere(u3_pier* pir_u, c3_y ** dat_y, c3_w* len_w, void ** opaq_u) ;
+u3_noun rehe(u3_pier* pir_u);
+c3_o  rene(u3_pier* pir_u, c3_y ** dat_y, c3_w* len_w, void ** opaq_u) ;
+c3_o  reon(u3_pier* pir_u, c3_d pos_d, c3_y ** dat_y, c3_w* len_w, void ** opaq_u);
 void  rede(void * opaq_u) ;
 void  resh(u3_pier* pir_u) ;
 
-c3_o wrin(u3_pier* pir_u, c3_c * pot_c) ;
+c3_o wrin(u3_pier* pir_u, c3_c * pot_c);
 c3_w wrze();
-void wric(u3_writ* wit_u, c3_d pos_d, c3_y* buf_y,  c3_y* byt_y, c3_w  len_w, writ_test_cb test_cb);
-void wris(u3_pier* pir_u) ;
+void wrhe(u3_pier* pir_u, u3_noun head, writ_test_cb test_cb);
+void wrne(u3_writ* wit_u, c3_y* buf_y,  c3_y* byt_y, c3_w  len_w, writ_test_cb test_cb);
+void wron(u3_writ* wit_u, c3_d pos_d, c3_y* buf_y,  c3_y* byt_y, c3_w  len_w, writ_test_cb test_cb);
+void wris(u3_pier* pir_u);
 
 // debugging for TJIC
 extern FILE * ulog;

@@ -6,7 +6,7 @@
 **  No need for fragmenting.
 **
 **  N.B. RocksDB takes ownership of the buffer that you pass in to
-**  u3_rock_write_write() / _rock_write_write().  As written, we free
+**  u3_rock_write_one() / _rock_write_one().  As written, we free
 **  that buffer in the write CB.  If you do something weird and free
 **  it before then, RocksDB will still reference that memory and will
 **  do weird things!
@@ -137,9 +137,19 @@ u3_rock_read_init(u3_pier* pir_u, c3_c * sto_c)
   return( _rock_init_comn(pir_u ->pin_u, sto_c));
 }
 
+c3_o
+u3_rock_read_one(u3_pier* pir_u, c3_d pos_d,   c3_y ** dat_y, c3_w * len_w, void ** hand_u)
+{
+  fprintf(stderr, "NOT IMPLEMENTED\n");
+  u3m_bail(c3__fail);
+  u3_noun a;
+  return(a);
+
+}
+
 
 c3_o
-u3_rock_read_read(u3_pier* pir_u,  c3_y ** dat_y, c3_w * len_w, void ** hand_u)
+u3_rock_read_next(u3_pier* pir_u,  c3_y ** dat_y, c3_w * len_w, void ** hand_u)
 {
   c3_y key_y[32];
   c3_y * err_y = NULL;
@@ -199,7 +209,7 @@ u3_rock_write_init(u3_pier* pir_u, c3_c * sto_c)
 }
 
 void
-_rock_write_write(u3_writ* wit_u, c3_d pos_d, c3_y* buf_y, c3_y* byt_y, c3_w  len_w, writ_test_cb test_cb)
+_rock_write_one(u3_writ* wit_u, c3_d pos_d, c3_y* buf_y, c3_y* byt_y, c3_w  len_w, writ_test_cb test_cb)
 {
 
 
@@ -215,12 +225,20 @@ _rock_write_write(u3_writ* wit_u, c3_d pos_d, c3_y* buf_y, c3_y* byt_y, c3_w  le
 
   
   if (err_y){
-    fprintf(stderr, "u3_rock_write_write() error: %s\n\r", (char *) err_y);
+    fprintf(stderr, "u3_rock_write_one() error: %s\n\r", (char *) err_y);
     u3m_bail(c3__fail); 
   }
 
 
 }
+
+void
+u3_rock_write_next(u3_writ* wit_u, c3_y* buf_y, c3_y* byt_y, c3_w  len_w, writ_test_cb test_cb)
+{
+  fprintf(stderr, "NOT IMPLEMENTED\n");
+  u3m_bail(c3__fail);
+}
+
 
 typedef struct _rock_write_cb_data {
   u3_writ * wit_u;  /* the writ from which this fragment comes */
@@ -239,7 +257,7 @@ void * _rock_write_cast(void * opq_u)
   /* do the write */
   rock_write_cb_data * cbd_u = (rock_write_cb_data *) opq_u;
   
-  _rock_write_write(cbd_u->wit_u, cbd_u->wit_u->evt_d, cbd_u-> buf_y, cbd_u-> byt_y, cbd_u->  len_w, cbd_u-> cbf_u);
+  _rock_write_one(cbd_u->wit_u, cbd_u->wit_u->evt_d, cbd_u-> buf_y, cbd_u-> byt_y, cbd_u->  len_w, cbd_u-> cbf_u);
 
   /* set the ack */
   cbd_u->wit_u->ped_o = c3y;
@@ -260,7 +278,7 @@ void * _rock_write_cast(void * opq_u)
 }
 
 void
-u3_rock_write_write(u3_writ* wit_u, c3_d pos_d, c3_y* buf_y, c3_y* byt_y, c3_w  len_w, writ_test_cb test_cb)
+u3_rock_write_one(u3_writ* wit_u, c3_d pos_d, c3_y* buf_y, c3_y* byt_y, c3_w  len_w, writ_test_cb test_cb)
 {
   pthread_t tid_u;
   c3_w ret_w;
@@ -278,7 +296,7 @@ u3_rock_write_write(u3_writ* wit_u, c3_d pos_d, c3_y* buf_y, c3_y* byt_y, c3_w  
                                    NULL,
                                    _rock_write_cast,  
                                    (void *) cbd_u ))) {
-    fprintf(stderr, "u3_rock_write_write() pthread fail: %s\n", mdb_strerror(ret_w));
+    fprintf(stderr, "u3_rock_write_one() pthread fail: %s\n", mdb_strerror(ret_w));
     u3m_bail(c3__fail); 
 
   }
@@ -297,3 +315,20 @@ u3_rock_write_shut(u3_pier* pir_u)
 
 
 
+
+void
+u3_rock_write_head(u3_pier* pir_u, u3_noun head, writ_test_cb test_cb)
+{
+  fprintf(stderr, "NOT IMPLEMENTED\n");
+  u3m_bail(c3__fail);
+}
+
+
+u3_noun
+u3_rock_read_head(u3_pier* pir_u)
+{
+  fprintf(stderr, "NOT IMPLEMENTED\n");
+  u3m_bail(c3__fail);
+  u3_noun a;
+  return(a);
+}
