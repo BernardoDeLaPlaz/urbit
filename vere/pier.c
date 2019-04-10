@@ -1254,14 +1254,6 @@ u3_pier_create(c3_w wag_w, c3_c* pax_c, c3_c* sys_c)
   return pir_u;
 }
 
-/* u3_pier_interrupt(): interrupt running process.
-*/
-void
-u3_pier_interrupt(u3_pier* pir_u)
-{
-  uv_process_kill(&pir_u->god_u->cub_u, SIGINT);
-}
-
 /* u3_pier_discover(): insert task into process controller.
 */
 void

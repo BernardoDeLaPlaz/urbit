@@ -468,48 +468,18 @@ _boothack_cb(uv_connect_t *conn, int status)
 void
 _king_loop_init()
 {
-  /* move signals out of unix.c */
-  /* build a linked list */
-  {
-    u3_usig* sig_u;
-
-    sig_u = c3_malloc(sizeof(u3_usig));
-    uv_signal_init(u3L, &sig_u->sil_u);
-
-    sig_u->num_i = SIGTERM;
-    sig_u->nex_u = u3_Host.sig_u;
-    u3_Host.sig_u = sig_u;
-  }
-  {
-    u3_usig* sig_u;
-
-    sig_u = c3_malloc(sizeof(u3_usig));
-    uv_signal_init(u3L, &sig_u->sil_u);
-
-    sig_u->num_i = SIGINT;
-    sig_u->nex_u = u3_Host.sig_u;
-    u3_Host.sig_u = sig_u;
-  }
-  {
-    u3_usig* sig_u;
-
-    sig_u = c3_malloc(sizeof(u3_usig));
-    uv_signal_init(u3L, &sig_u->sil_u);
-
-    sig_u->num_i = SIGWINCH;
-    sig_u->nex_u = u3_Host.sig_u;
-    u3_Host.sig_u = sig_u;
-  }
-
+  u3_signal_setup();
+  
   /* boot hack */
-  {
-    u3_moor *mor_u = c3_malloc(sizeof(u3_moor));
-    uv_connect_t *conn = c3_malloc(sizeof(uv_connect_t));
-    conn->data = mor_u;
-    uv_pipe_init(u3L, &mor_u->pyp_u, 0);
-    uv_pipe_connect(conn, &mor_u->pyp_u, u3K.soc_c, _boothack_cb);
-  }
+  u3_moor *mor_u = c3_malloc(sizeof(u3_moor));
+  uv_connect_t *conn = c3_malloc(sizeof(uv_connect_t));
+  conn->data = mor_u;
+  uv_pipe_init(u3L, &mor_u->pyp_u, 0);
+  uv_pipe_connect(conn, &mor_u->pyp_u, u3K.soc_c, _boothack_cb);
+
 }
+
+
 
 /* _king_loop_exit(): cleanup after event loop
 */

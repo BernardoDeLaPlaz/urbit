@@ -1354,6 +1354,13 @@
         void
         _pier_init_writ(u3_pier* pir_u, c3_c * pot_c);
 
+     /* signal handling */
+	void u3_signal_init_mainthread();
+	void u3_signal_setup();
+	void u3_signal_activate();
+	void u3_signal_hold();
+
+
      /* read */
 
      typedef struct _mult_read_hand {
