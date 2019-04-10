@@ -10,6 +10,28 @@
 
 #include "all.h"
 
+
+/*
+
+   Overview:
+
+       This code manages nouns and deals with exceptions when Nock computations have problems.
+
+   Notes on signal handling:
+
+       There is a healthy bit of signal handling code here. This
+       signal handling code is only for problems around Nock
+       computations.
+
+       The signal handling code for the king process is all located in vere/sign.c
+
+       No code relating to signals should ever appeal in a file other
+       than this one and that one.
+
+*/
+ 
+
+
 #undef NO_OVERFLOW
 
       /* (u3_noun)setjmp(u3R->esc.buf): setjmp within road.
@@ -79,9 +101,6 @@ static sigjmp_buf u3_Signal;
 #ifndef NO_OVERFLOW
 static uint8_t Sigstk[SIGSTKSZ];
 #endif
-
-void u3_unix_ef_hold(void);         //  suspend system signal regime
-void u3_unix_ef_move(void);         //  restore system signal regime
 
 #if 0
 /* _cm_punt(): crudely print trace.
@@ -319,13 +338,20 @@ _cm_signal_recover(c3_l sig_l, u3_noun arg)
 static void
 _cm_signal_deep(c3_w sec_w)
 {
-  u3_unix_ef_hold();
+  u3_signal_hold();
 
 #ifndef NO_OVERFLOW
   stackoverflow_install_handler(_cm_signal_handle_over, Sigstk, SIGSTKSZ);
 #endif
-  signal(SIGINT, _cm_signal_handle_intr);
-  signal(SIGTERM, _cm_signal_handle_term);
+
+  struct sigaction _sa;
+  bzero(& _sa, sizeof(struct sigaction));
+
+  _sa.sa_handler = _cm_signal_handle_intr;
+  sigaction(SIGINT, & _sa, NULL);
+
+  _sa.sa_handler = _cm_signal_handle_term;
+  sigaction(SIGTERM, & _sa, NULL);
 
   // Provide a little emergency memory, for use in case things
   // go utterly haywire.
@@ -342,7 +368,12 @@ _cm_signal_deep(c3_w sec_w)
     itm_u.it_value.tv_usec = 0;
 
     setitimer(ITIMER_VIRTUAL, &itm_u, 0);
-    signal(SIGVTALRM, _cm_signal_handle_alrm);
+
+    struct sigaction _sa;
+    bzero(& _sa, sizeof(struct sigaction));
+    _sa.sa_handler = _cm_signal_handle_alrm;
+
+    sigaction(SIGVTALRM, & _sa, NULL);
   }
 
   u3t_boot();
@@ -353,9 +384,11 @@ _cm_signal_deep(c3_w sec_w)
 static void
 _cm_signal_done()
 {
-  // signal(SIGINT, SIG_IGN);
-  signal(SIGTERM, SIG_IGN);
-  signal(SIGVTALRM, SIG_IGN);
+  struct sigaction _sa;
+  bzero(& _sa, sizeof(struct sigaction));
+  _sa.sa_handler = SIG_IGN;
+  sigaction(SIGTERM, & _sa, NULL);
+  sigaction(SIGVTALRM, & _sa, NULL);
 
   stackoverflow_deinstall_handler();
   {
@@ -366,7 +399,7 @@ _cm_signal_done()
 
     setitimer(ITIMER_VIRTUAL, &itm_u, 0);
   }
-  u3_unix_ef_move();
+  u3_signal_activate();
   u3t_boff();
 }
 
@@ -1523,7 +1556,6 @@ _cm_signals(void)
     fprintf(stderr, "sigsegv install failed\n");
     exit(1);
   }
-  // signal(SIGINT, _loom_stop);
 
 
   //  Block SIGPROF, so that if/when we reactivate it on the

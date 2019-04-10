@@ -1331,7 +1331,14 @@
         void
         u3_king_commence();
 
-      /* u3_king_grab(): gc the kingdom
-      */
         void
         u3_king_grab(void* vod_p);
+
+
+
+		 /* signal handling */
+		void u3_signal_init_mainthread();
+		void u3_signal_setup();
+		void u3_signal_activate();
+		void u3_signal_hold();
+
