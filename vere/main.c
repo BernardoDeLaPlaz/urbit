@@ -212,6 +212,16 @@ _main_getopt(c3_i argc, c3_c** argv)
     }
   }
 
+  // default values for input and output persistence, if not set by user
+  //
+  if (NULL == u3_Host.ops_u.pot_c){
+    u3_Host.ops_u.pot_c = strdup("s");
+  }
+  if (NULL == u3_Host.ops_u.pin_c){
+    u3_Host.ops_u.pin_c = strdup("s");
+  }
+
+  
 #if defined(U3_OS_bsd)
   if (u3_Host.ops_u.pro == c3y) {
     fprintf(stderr, "profiling isn't yet supported on BSD\r\n");
