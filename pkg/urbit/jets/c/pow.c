@@ -10,7 +10,7 @@
   u3qc_pow(u3_atom a,
            u3_atom b)
   {
-    if ( !_(u3a_is_cat(b)) ) {
+    if ( !_(u3a_is_direct_l(b)) ) {
       return u3m_bail(c3__fail);
     }
     else {

@@ -14,12 +14,8 @@
 
       /* (u3_noun)setjmp(u3R->esc.buf): setjmp within road.
       */
-#if 0
         c3_o
         u3m_trap(void);
-#else
-#       define u3m_trap() (u3_noun)(_setjmp(u3R->esc.buf))
-#endif
 
       /* u3m_signal(): treat a nock-level exception as a signal interrupt.
       */
@@ -136,7 +132,7 @@ _cm_signal_handle(c3_l sig_l)
     sigsegv_leave_handler(_cm_overflow, NULL, NULL, NULL);
   }
   else {
-    siglongjmp(u3_Signal, sig_l);
+    siglongjmp(u3_Signal, c3_l_to_ws(sig_l));
   }
 }
 
@@ -390,9 +386,9 @@ _cm_signal_done()
 /* u3m_signal(): treat a nock-level exception as a signal interrupt.
 */
 void
-u3m_signal(u3_noun sig_l)
+u3m_signal(u3_noun sig_d)
 {
-  siglongjmp(u3_Signal, sig_l);
+  siglongjmp(u3_Signal, c3_d_to_ws(sig_d));
 }
 
 /* u3m_file(): load file, as atom, or bail.
@@ -409,10 +405,10 @@ u3m_file(c3_c* pas_c)
     u3l_log("%s: %s\r\n", pas_c, strerror(errno));
     return u3m_bail(c3__fail);
   }
-  fln_w = buf_b.st_size;
-  pad_y = c3_malloc(buf_b.st_size);
+  fln_w = c3_ds_to_w(buf_b.st_size);
+  pad_y = c3_malloc( c3_ds_to_d(buf_b.st_size));
 
-  red_w = read(fid_i, pad_y, fln_w);
+  red_w = c3_ds_to_w(read(fid_i, pad_y, fln_w));
   close(fid_i);
 
   if ( fln_w != red_w ) {
@@ -445,23 +441,36 @@ _find_south(c3_w* mem_w, c3_w siz_w, c3_w len_w)
 }
 #endif
 
+
+// given a big block of Loom memory
+//   * memset it
+//   * build a header / control structure at the top of it
+//   
 static u3_road*
-_pave_north(c3_w* mem_w, c3_w siz_w, c3_w len_w)
+  _pave_north(c3_w* mem_w,   // base of Loom
+              c3_w siz_w,    // size of u3_road structure  (in words)
+              c3_w len_w)    // size of Loom
 {
   c3_w*    rut_w = mem_w;
   c3_w*    hat_w = rut_w;
   c3_w*    mat_w = ((mem_w + len_w) - siz_w);
-  c3_w*    cap_w = mat_w;
-  u3_road* rod_u = (void*) mat_w;
+  c3_w*    cap_w = mat_w;   // the highest mem addr accessable for storage
+  u3_road* rod_u = (void*) mat_w;  // the road header structure
 
   // memset(mem_w, 0, 4 * len_w);     // enable in case of corruption
-  memset(rod_u, 0, 4 * siz_w);
 
-  rod_u->rut_p = u3of(c3_w, rut_w);
-  rod_u->hat_p = u3of(c3_w, hat_w);
+  
+  u3_post tmp;
+  
+  tmp = u3a_outa_wp(rut_w);  
+  rod_u->rut_p = tmp;
+  tmp = u3a_outa_wp(hat_w);
+  rod_u->hat_p = tmp;
 
-  rod_u->mat_p = u3of(c3_w, mat_w);
-  rod_u->cap_p = u3of(c3_w, cap_w);
+  tmp = u3a_outa_wp(mat_w);
+  rod_u->mat_p = tmp;
+  tmp = u3a_outa_wp(cap_w);
+  rod_u->cap_p = tmp;
 
   return rod_u;
 }
@@ -478,7 +487,7 @@ _pave_south(c3_w* mem_w, c3_w siz_w, c3_w len_w)
   u3_road* rod_u = (void*) mat_w;
 
   //  memset(mem_w, 0, 4 * len_w);    //  enable in case of corruption
-  memset(rod_u, 0, 4 * siz_w);
+  //  memset(rod_u, 0, 4 * siz_w);
 
   rod_u->rut_p = u3of(c3_w, rut_w);
   rod_u->hat_p = u3of(c3_w, hat_w);
@@ -612,7 +621,7 @@ c3_w Exit;
 **        [%3 code trace]
 **    ==
 */
-c3_i
+u3_noun
 u3m_bail(u3_noun how)
 {
   if ( (c3__exit == how) && (u3R == &u3H->rod_u) ) {
@@ -634,7 +643,7 @@ u3m_bail(u3_noun how)
     }
     else {
       c3_assert(_(u3ud(u3h(how))));
-      u3l_log("\r\nbail: %d\r\n", u3h(how));
+      u3l_log("\r\nbail: %ld\r\n", u3h(how));
     }
   }
 
@@ -669,7 +678,7 @@ u3m_bail(u3_noun how)
     //  choice but to use the signal process; and we require the flat
     //  form of how.
     //
-    c3_assert(_(u3a_is_cat(how)));
+    c3_assert(_(u3a_is_direct_l(how)));
     u3m_signal(how);
   }
 
@@ -695,14 +704,17 @@ u3m_bail(u3_noun how)
 
   /* Longjmp, with an underscore.
   */
-  _longjmp(u3R->esc.buf, how);
+  _longjmp(u3R->esc.buf, u3a_noun_to_ws(how) );
 }
 
-int c3_cooked() { return u3m_bail(c3__oops); }
+int c3_cooked() {
+  u3m_bail(c3__oops);
+  return(-1);
+}
 
 /* u3m_error(): bail out with %exit, ct_pushing error.
 */
-c3_i
+u3_noun
 u3m_error(c3_c* str_c)
 {
   u3t_mean(u3i_string(str_c));
@@ -898,13 +910,13 @@ u3m_water(c3_w* low_w, c3_w* hig_w)
   *hig_w = (u3H->rod_u.mat_p - u3H->rod_u.cap_p) + c3_wiseof(u3v_home);
 }
 
-/* u3m_soft_top(): top-level safety wrapper.
-*/
+/* u3m_soft_top(): top-level safety wrapper.  
+                   Call a function fun_f 'noun f(noun)' on arg 'arg', but trap errors  */
 u3_noun
 u3m_soft_top(c3_w    sec_w,                     //  timer seconds
              c3_w    pad_w,                     //  base memory pad
-             u3_funk fun_f,
-             u3_noun arg)
+             u3_funk fun_f,                     // the function to fall
+             u3_noun arg)                       // the argument we call fun_f() on
 {
   u3_noun why, pro;
   c3_l    sig_l;
@@ -913,7 +925,7 @@ u3m_soft_top(c3_w    sec_w,                     //  timer seconds
   */
   _cm_signal_deep(0);
 
-  if ( 0 != (sig_l = sigsetjmp(u3_Signal, 1)) ) {
+  if ( 0 != (sig_l = c3_ds_to_l(sigsetjmp(u3_Signal, 1))) ) {
     //  reinitialize trace state
     //
     u3t_init();
@@ -933,8 +945,10 @@ u3m_soft_top(c3_w    sec_w,                     //  timer seconds
 
   /* Trap for ordinary nock exceptions.
   */
-  if ( 0 == (why = (u3_noun)_setjmp(u3R->esc.buf)) ) {
-    pro = fun_f(arg);
+  c3_w jump_w = c3_ds_to_w(_setjmp(u3R->esc.buf));
+  why = u3_w_to_noun(jump_w);
+  if ( 0 == why ) {
+    pro = fun_f(arg);   // <---- this is the core of it all: invoke function 'fun_f' on data 'arg'
 
     /* Make sure the inner routine did not create garbage.
     */
@@ -1276,9 +1290,11 @@ _cm_is_ta(u3_noun som, c3_w len_w)
 */
 c3_y _cm_hex(c3_y c_y)
 {
-  if ( c_y < 10 )
-    return '0' + c_y;
-  else return 'a' + (c_y - 10);
+  if ( c_y < 10 ){
+    return( c3_w_to_y( (c3_w)'0' + (c3_w)c_y));
+  }  else {
+    return( c3_ws_to_y( (c3_ws) 'a' + (c3_ws)c_y - (c3_ws)10 ));
+  }
 }
 
 /* _cm_in_pretty: measure/cut prettyprint.
@@ -1314,8 +1330,8 @@ _cm_in_pretty(u3_noun som, c3_o sel_o, c3_c* str_c)
       c3_c buf_c[6];
       c3_w len_w;
 
-      snprintf(buf_c, 6, "%d", som);
-      len_w = strlen(buf_c);
+      snprintf(buf_c, 6, "%ld", som);
+      len_w = c3_d_to_w(strlen(buf_c));
 
       if ( str_c ) { strcpy(str_c, buf_c); str_c += len_w; }
       return len_w;
@@ -1455,13 +1471,15 @@ u3m_tape(u3_noun tep)
   u3_noun tap = tep;
 
   while ( u3_nul != tap ) {
-    c3_c car_c;
+    c3_y car_y;
 
     if ( u3h(tap) >= 127 ) {
-      car_c = '?';
-    } else car_c = u3h(tap);
+      car_y = '?';
+    } else {
+      car_y = (c3_y) u3h(tap);
+    }
 
-    putc(car_c, stdout);
+    putc((char) car_y, stdout);
     tap = u3t(tap);
   }
   u3z(tep);
@@ -1591,55 +1609,15 @@ u3m_init(void)
                          -1, 0);
 
       u3l_log("boot: mapping %dMB failed\r\n", (len_w / (1024 * 1024)));
-      u3l_log("see urbit.org/docs/getting-started#swap for adding swap space\r\n");
+      u3l_log("see urbit.org/docs/using/install to add swap space\r\n");
       if ( -1 != (c3_ps)map_v ) {
         u3l_log("if porting to a new platform, try U3_OS_LoomBase %p\r\n",
                 dyn_v);
       }
       exit(1);
     }
-
-    u3l_log("loom: mapped %dMB\r\n", len_w >> 20);
-  }
-}
-
-/* _cm_init_new(): start the environment.
-*/
-void
-_cm_init_new(void)
-{
-  _cm_limits();
-  _cm_signals();
-
-  /* Make sure GMP uses our malloc.
-  */
-  mp_set_memory_functions(u3a_malloc, u3a_realloc2, u3a_free2);
-
-  /* Map at fixed address.
-  */
-  {
-    c3_w  len_w = u3a_bytes;
-    void* map_v;
-
-    map_v = mmap((void *)u3_Loom,
-                 len_w,
-                 (PROT_READ | PROT_WRITE),
-                 (MAP_ANON | MAP_FIXED | MAP_PRIVATE),
-                 -1, 0);
-
-    if ( -1 == (c3_ps)map_v ) {
-      void* dyn_v = mmap((void *)0,
-                         len_w,
-                         PROT_READ,
-                         MAP_ANON | MAP_PRIVATE,
-                         -1, 0);
-
-      u3l_log("boot: mapping %dMB failed\r\n", (len_w / (1024 * 1024)));
-      u3l_log("see urbit.org/docs/using/install to add swap space\r\n");
-      if ( -1 != (c3_ps)map_v ) {
-        u3l_log("if porting to a new platform, try U3_OS_LoomBase %p\r\n",
-                dyn_v);
-      }
+    if (map_v != (void* ) u3_Loom){
+      u3l_log("boot: mmmap() got allocation at address %p which code is not prepared to handle\n", map_v);
       exit(1);
     }
 
@@ -1706,174 +1684,6 @@ _git_pill_url(c3_c *out_c, c3_c *arv_c)
 }
 #endif
 
-//  XX deprecated, remove
-#if 0
-/* _boot_home(): create ship directory.
-*/
-static void
-_boot_home(c3_c *dir_c, c3_c *pil_c, c3_c *url_c, c3_c *arv_c)
-{
-  c3_c*   nam_c = "urbit.pill";
-  c3_c    ful_c[2048];
-
-  /* Create subdirectories. */
-  {
-    mkdir(dir_c, 0700);
-
-    snprintf(ful_c, 2048, "%s/.urb", dir_c);
-    mkdir(ful_c, 0700);
-
-    snprintf(ful_c, 2048, "%s/.urb/get", dir_c);
-    mkdir(ful_c, 0700);
-
-    snprintf(ful_c, 2048, "%s/.urb/put", dir_c);
-    mkdir(ful_c, 0700);
-
-    snprintf(ful_c, 2048, "%s/.urb/sis", dir_c);
-    mkdir(ful_c, 0700);
-  }
-  /* Copy urbit.pill. */
-  {
-    {
-      struct stat s;
-      snprintf(ful_c, 2048, "%s/.urb/%s", dir_c, nam_c);
-      if ( stat(ful_c, &s) == 0 ) {
-        /* we're in a "logical boot". awful hack, but bail here */
-        u3l_log("%s confirmed to exist\r\n", ful_c);
-        return;
-      }
-    }
-
-    /* Copy local pill file. */
-    if ( pil_c != 0 ) {
-      snprintf(ful_c, 2048, "cp %s %s/.urb/%s",
-                      pil_c, dir_c, nam_c);
-      u3l_log("%s\r\n", ful_c);
-      if ( 0 != system(ful_c) ) {
-        u3l_log("could not %s\n", ful_c);
-        exit(1);
-      }
-    }
-    /* Fetch remote pill over HTTP. */
-    else {
-      CURL *curl;
-      CURLcode result;
-      FILE *file;
-      c3_c pil_c[2048];
-      long cod_l;
-
-      /* use arvo git hash and branch for pill url unless overridden */
-      if ( NULL == url_c ) {
-        url_c = pil_c;
-        _git_pill_url(url_c, arv_c);
-      }
-
-      snprintf(ful_c, 2048, "%s/.urb/urbit.pill", dir_c);
-      u3l_log("fetching %s to %s\r\n", url_c, ful_c);
-      if ( !(curl = curl_easy_init()) ) {
-        u3l_log("failed to initialize libcurl\n");
-        exit(1);
-      }
-      if ( !(file = fopen(ful_c, "w")) ) {
-        u3l_log("failed to open %s\n", ful_c);
-        exit(1);
-      }
-      curl_easy_setopt(curl, CURLOPT_URL, url_c);
-      curl_easy_setopt(curl, CURLOPT_WRITEDATA, file);
-      result = curl_easy_perform(curl);
-      curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &cod_l);
-      fclose(file);
-      if ( CURLE_OK != result ) {
-        u3l_log("failed to fetch %s: %s\n",
-                url_c, curl_easy_strerror(result));
-        u3l_log("please fetch it manually and specify the location with -B\n");
-        exit(1);
-      }
-      if ( 300 <= cod_l ) {
-        u3l_log("error fetching %s: HTTP %ld\n", url_c, cod_l);
-        u3l_log("please fetch it manually and specify the location with -B\n");
-        exit(1);
-      }
-      curl_easy_cleanup(curl);
-    }
-  }
-}
-#endif
-
-//  XX deprecated, remove
-#if 0
-/* u3m_boot(): start the u3 system (old).
-*/
-void
-u3m_boot(c3_o nuu_o, c3_o bug_o, c3_c* dir_c,
-         c3_c *pil_c, c3_c *url_c, c3_c *arv_c)
-{
-  /* Activate the loom.
-  */
-  u3m_init();
-
-  /* Activate the storage system.
-  */
-  nuu_o = u3e_live(nuu_o, dir_c);
-
-  /* Activate tracing.
-  */
-  u3t_init();
-
-  /* Construct or activate the allocator.
-  */
-  u3m_pave(nuu_o, bug_o);
-
-  /* Initialize the jet system.
-  */
-  u3j_boot(nuu_o);
-
-  /* Install or reactivate the kernel.
-  */
-  if ( _(nuu_o) ) {
-    c3_c ful_c[2048];
-
-    _boot_home(dir_c, pil_c, url_c, arv_c);
-
-    snprintf(ful_c, 2048, "%s/.urb/urbit.pill", dir_c);
-    u3l_log("boot: loading %s\r\n", ful_c);
-
-    {
-      u3_noun pil = u3m_file(ful_c);
-      u3_noun sys, bot;
-
-      {
-        u3_noun pro = u3m_soft(0, u3ke_cue, u3k(pil));
-
-        if ( 0 != u3h(pro) ) {
-          u3l_log("boot: failed: unable to parse pill\r\n");
-          exit(1);
-        }
-
-        sys = u3k(u3t(pro));
-        u3z(pro);
-      }
-
-      //  XX confirm trel of lists?
-      //
-      if ( c3n == u3r_trel(sys, &bot, 0, 0) ) {
-        u3l_log("boot: failed: obsolete pill structure\r\n");
-        exit(1);
-      }
-
-      u3v_boot(u3k(bot));
-
-      u3z(sys);
-      u3z(pil);
-    }
-  }
-  else {
-    u3v_hose();
-    u3j_ream();
-    u3n_ream();
-  }
-}
-#endif
 
 /* u3m_boot_new(): start the u3 system (new).  return next event,
 ** starting from 1.
@@ -1885,7 +1695,7 @@ u3m_boot_new(c3_c* dir_c)
 
   /* Activate the loom.
   */
-  _cm_init_new();
+  u3m_init();
 
   /* Activate the storage system.
   */
@@ -1935,7 +1745,7 @@ u3m_boot_pier(void)
 {
   /* Activate the loom.
   */
-  _cm_init_new();
+  u3m_init();
 
   /* Activate tracing.
   */

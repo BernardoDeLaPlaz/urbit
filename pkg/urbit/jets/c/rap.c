@@ -10,11 +10,11 @@
   u3qc_rap(u3_atom a,
            u3_noun b)
   {
-    if ( !_(u3a_is_cat(a)) || (a >= 32) ) {
+    if ( !_(u3a_is_direct_l(a)) || (a >= 32) ) {
       return u3m_bail(c3__exit);
     }
     else {
-      c3_g  a_g = a;
+      c3_g  a_g = (c3_g) a;
       c3_w  tot_w = 0;
       c3_w* sal_w;
 

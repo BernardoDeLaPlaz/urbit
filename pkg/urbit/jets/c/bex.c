@@ -7,11 +7,11 @@
 /* functions
 */
   u3_noun
-  u3qc_bex(u3_atom a)
+  u3qc_bex(u3_atom a)  // binary exponent: 2 ^ a
   {
     mpz_t a_mp;
 
-    if ( !_(u3a_is_cat(a)) ) {
+    if ( !_(u3a_is_direct_l(a)) ) {
       return u3m_bail(c3__fail);
     }
     else {

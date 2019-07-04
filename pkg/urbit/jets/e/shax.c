@@ -17,10 +17,15 @@
   u3qe_shay(u3_atom a,
             u3_atom b)
   {
-    c3_assert(_(u3a_is_cat(a)));
+    c3_assert(_(u3a_is_direct_l(a)));
     c3_y* fat_y = u3a_malloc(a + 1);
 
-    u3r_bytes(0, a, fat_y, b);
+    if (a > c3_w_MAX) {
+      u3m_bail(c3__fail);
+    }
+    c3_w a_w = (c3_w) a; // ok; tested size above
+
+    u3r_bytes(0, a_w, fat_y, b);
     {
       c3_y dig_y[32];
 #if defined(U3_OS_osx)
@@ -82,10 +87,16 @@ u3_noun
   u3qe_shal(u3_atom a,
             u3_atom b)
   {
-    c3_assert(_(u3a_is_cat(a)));
+    c3_assert(_(u3a_is_direct_l(a)));
     c3_y* fat_y = u3a_malloc(a + 1);
 
-    u3r_bytes(0, a, fat_y, b);
+    if (a > c3_w_MAX) {
+      u3m_bail(c3__fail);
+    }
+    c3_w a_w = (c3_w) a; // ok; tested size above
+
+    
+    u3r_bytes(0, a_w, fat_y, b);
     {
       c3_y dig_y[64];
 #if defined(U3_OS_osx)
@@ -144,7 +155,7 @@ u3_noun
     if ( (u3_none == (a = u3r_at(u3x_sam_2, cor))) ||
          (u3_none == (b = u3r_at(u3x_sam_3, cor))) ||
          (c3n == u3ud(a)) ||
-         (c3n == u3a_is_cat(a)) ||
+         (c3n == u3a_is_direct_l(a)) ||
          (c3n == u3ud(b)) )
     {
       return u3m_bail(c3__exit);
@@ -161,7 +172,7 @@ u3_noun
     if ( (u3_none == (a = u3r_at(u3x_sam_2, cor))) ||
          (u3_none == (b = u3r_at(u3x_sam_3, cor))) ||
          (c3n == u3ud(a)) ||
-         (c3n == u3a_is_cat(a)) ||
+         (c3n == u3a_is_direct_l(a)) ||
          (c3n == u3ud(b)) )
     {
       return u3m_bail(c3__exit);
@@ -193,7 +204,7 @@ u3_noun
   {
     u3_noun l = u3_nul;
 
-    if ( !_(u3a_is_cat(b)) ) {
+    if ( !_(u3a_is_direct_l(b)) ) {
       return u3m_bail(c3__fail);
     }
     while ( 0 != b ) {

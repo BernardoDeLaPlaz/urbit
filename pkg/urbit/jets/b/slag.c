@@ -12,18 +12,18 @@
     if ( u3_nul == b ) {
       return u3_nul;
     }
-    else if ( !_(u3a_is_cat(a)) ) {
+    else if ( !_(u3a_is_direct_l(a)) ) {
       return u3m_bail(c3__fail);
     }
     else {
-      c3_w len_w = a;
+      c3_d len_d = a;
 
-      while ( len_w ) {
+      while ( len_d ) {
         if ( c3n == u3du(b) ) {
           return u3_nul;
         }
         b = u3t(b);
-        len_w--;
+        len_d--;
       }
       return u3k(b);
     }

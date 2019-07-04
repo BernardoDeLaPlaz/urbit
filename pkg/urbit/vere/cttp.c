@@ -21,7 +21,7 @@
 static u3_noun
 _cttp_vec_to_atom(h2o_iovec_t vec_u)
 {
-  return u3i_bytes(vec_u.len, (const c3_y*)vec_u.base);
+  return u3i_bytes( c3_sizet_to_w(vec_u.len), (const c3_y*)vec_u.base);
 }
 
 /* _cttp_bods_free(): free body structure.
@@ -113,10 +113,10 @@ _cttp_bod_from_octs(u3_noun oct)
 {
   c3_w len_w;
 
-  if ( !_(u3a_is_cat(u3h(oct))) ) {     //  2GB max
+  if ( !_(u3a_is_direct_l(u3h(oct))) ) {     //  2GB max
     u3m_bail(c3__fail); return 0;
   }
-  len_w = u3h(oct);
+  len_w = u3a_noun_to_w(u3h(oct));
 
   {
     u3_hbod* bod_u = c3_malloc(1 + len_w + sizeof(*bod_u));
@@ -553,7 +553,7 @@ _cttp_creq_new(c3_l num_l, u3_noun hes)
 
   ceq_u->sat_e = u3_csat_init;
   ceq_u->num_l = num_l;
-  ceq_u->sec   = sec;
+  ceq_u->sec   = u3a_noun_to_o(sec);
 
   if ( c3y == u3h(hot) ) {
     ceq_u->hot_c = _cttp_creq_host(u3k(u3t(hot)));
@@ -563,7 +563,7 @@ _cttp_creq_new(c3_l num_l, u3_noun hes)
   }
 
   if ( u3_nul != por ) {
-    ceq_u->por_s = u3t(por);
+    ceq_u->por_s = u3a_noun_to_s(u3t(por));
     ceq_u->por_c = _cttp_creq_port(ceq_u->por_s);
   }
 
@@ -602,7 +602,7 @@ _cttp_creq_fire_body(u3_creq* ceq_u, u3_hbod *rub_u)
 static void
 _cttp_creq_fire_str(u3_creq* ceq_u, c3_c* str_c)
 {
-  _cttp_creq_fire_body(ceq_u, _cttp_bod_new(strlen(str_c), str_c));
+  _cttp_creq_fire_body(ceq_u, _cttp_bod_new( c3_sizet_to_w(strlen(str_c)), str_c));
 }
 
 /* _cttp_creq_fire_heds(): attach output headers.
@@ -641,14 +641,14 @@ _cttp_creq_fire(u3_creq* ceq_u)
     c3_w  len_w;
 
     if ( ceq_u->por_c ) {
-      len_w = 6 + strlen(hot_c) + 1 + strlen(ceq_u->por_c) + 3;
+      len_w = c3_sizet_to_w(6 + strlen(hot_c) + 1 + strlen(ceq_u->por_c) + 3);
       hos_c = c3_malloc(len_w);
-      len_w = snprintf(hos_c, len_w, "Host: %s:%s\r\n", hot_c, ceq_u->por_c);
+      len_w = c3_ws_to_w( snprintf(hos_c, len_w, "Host: %s:%s\r\n", hot_c, ceq_u->por_c));
     }
     else {
-      len_w = 6 + strlen(hot_c) + 3;
+      len_w = c3_sizet_to_w(6 + strlen(hot_c) + 3);
       hos_c = c3_malloc(len_w);
-      len_w = snprintf(hos_c, len_w, "Host: %s\r\n", hot_c);
+      len_w = c3_ws_to_w(snprintf(hos_c, len_w, "Host: %s\r\n", hot_c));
     }
 
     _cttp_creq_fire_body(ceq_u, _cttp_bod_new(len_w, hos_c));
@@ -662,8 +662,8 @@ _cttp_creq_fire(u3_creq* ceq_u)
   }
   else {
     c3_c len_c[41];
-    c3_w len_w = snprintf(len_c, 40, "Content-Length: %u\r\n\r\n",
-                                     ceq_u->bod_u->len_w);
+    c3_w len_w = c3_ws_to_w(snprintf(len_c, 40, "Content-Length: %u\r\n\r\n",
+                                    ceq_u->bod_u->len_w));
 
     _cttp_creq_fire_body(ceq_u, _cttp_bod_new(len_w, len_c));
     _cttp_creq_fire_body(ceq_u, ceq_u->bod_u);
@@ -744,7 +744,7 @@ _cttp_creq_on_body(h2o_http1client_t* cli_u, const c3_c* err_c)
 
   if ( buf_u->size ) {
     _cttp_cres_fire_body(ceq_u->res_u,
-                         _cttp_bod_new(buf_u->size, buf_u->bytes));
+                         _cttp_bod_new( c3_sizet_to_w(buf_u->size), buf_u->bytes));
     h2o_buffer_consume(&cli_u->sock->input, buf_u->size);
   }
 
@@ -822,7 +822,7 @@ _cttp_creq_connect(u3_creq* ceq_u)
 
   // set hostname for TLS handshake
   if ( ceq_u->hot_c && c3y == ceq_u->sec ) {
-    c3_w len_w  = 1 + strlen(ceq_u->hot_c);
+    c3_w len_w  = c3_sizet_to_w(1 + strlen(ceq_u->hot_c));
     c3_c* hot_c = c3_malloc(len_w);
     strncpy(hot_c, ceq_u->hot_c, len_w);
 

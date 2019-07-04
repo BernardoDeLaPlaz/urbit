@@ -44,7 +44,7 @@ _term_msc_out_host()
 {
   struct timeval tim_tv;
   gettimeofday(&tim_tv, 0);
-  return 1000000ULL * tim_tv.tv_sec + tim_tv.tv_usec;
+  return (1000000ULL * c3_ds_to_d(tim_tv.tv_sec + tim_tv.tv_usec));
 }
 
 /* _term_alloc(): libuv buffer allocator.
@@ -170,22 +170,22 @@ u3_term_io_init()
       }
 
       uty_u->ufo_u.inn.max_w = 0;
-      if ( (len_w = strlen((c3_c*)uty_u->ufo_u.inn.kcuu1_y)) >
+      if ( (len_w = c3_sizet_to_w(strlen((c3_c*)uty_u->ufo_u.inn.kcuu1_y))) >
             uty_u->ufo_u.inn.max_w )
       {
         uty_u->ufo_u.inn.max_w = len_w;
       }
-      if ( (len_w = strlen((c3_c*)uty_u->ufo_u.inn.kcud1_y)) >
+      if ( (len_w = c3_sizet_to_w(strlen((c3_c*)uty_u->ufo_u.inn.kcud1_y))) >
             uty_u->ufo_u.inn.max_w )
       {
         uty_u->ufo_u.inn.max_w = len_w;
       }
-      if ( (len_w = strlen((c3_c*)uty_u->ufo_u.inn.kcub1_y)) >
+      if ( (len_w = c3_sizet_to_w(strlen((c3_c*)uty_u->ufo_u.inn.kcub1_y))) >
             uty_u->ufo_u.inn.max_w )
       {
         uty_u->ufo_u.inn.max_w = len_w;
       }
-      if ( (len_w = strlen((c3_c*)uty_u->ufo_u.inn.kcuf1_y)) >
+      if ( (len_w = c3_sizet_to_w(strlen((c3_c*)uty_u->ufo_u.inn.kcuf1_y))) >
             uty_u->ufo_u.inn.max_w )
       {
         uty_u->ufo_u.inn.max_w = len_w;
@@ -210,11 +210,11 @@ u3_term_io_init()
     {
       uty_u->raw_u = uty_u->bak_u;
 
-      uty_u->raw_u.c_lflag &= ~(ECHO | ECHONL | ICANON | IEXTEN);
-      uty_u->raw_u.c_iflag &= ~(ICRNL | INPCK | ISTRIP);
-      uty_u->raw_u.c_cflag &= ~(CSIZE | PARENB);
-      uty_u->raw_u.c_cflag |= CS8;
-      uty_u->raw_u.c_oflag &= ~(OPOST);
+      uty_u->raw_u.c_lflag &= (tcflag_t) ~(ECHO | ECHONL | ICANON | IEXTEN);
+      uty_u->raw_u.c_iflag &= (tcflag_t) ~(ICRNL | INPCK | ISTRIP);
+      uty_u->raw_u.c_cflag &= (tcflag_t) ~(CSIZE | PARENB);
+      uty_u->raw_u.c_cflag |= (tcflag_t) CS8;
+      uty_u->raw_u.c_oflag &= (tcflag_t) ~(OPOST);
       uty_u->raw_u.c_cc[VMIN] = 0;
       uty_u->raw_u.c_cc[VTIME] = 0;
     }
@@ -262,11 +262,11 @@ u3_term_io_init()
         uv_mutex_init(&uty_u->tat_u.mex_u);
         uv_mutex_lock(&uty_u->tat_u.mex_u);
 
-        c3_w ret_w = uv_thread_create(uty_u->tat_u.sun.sit_u,
-                                      _term_spinner_cb,
-                                      uty_u);
+        c3_w ret_w = c3_ws_to_w(uv_thread_create(uty_u->tat_u.sun.sit_u,
+                                                 _term_spinner_cb,
+                                                 uty_u));
         if ( 0 != ret_w ) {
-          u3l_log("term: spinner start: %s\n", uv_strerror(ret_w));
+          u3l_log("term: spinner start: %s\n", uv_strerror(c3_w_to_ws(ret_w)));
           free(uty_u->tat_u.sun.sit_u);
           uty_u->tat_u.sun.sit_u = NULL;
           uv_mutex_unlock(&uty_u->tat_u.mex_u);
@@ -371,12 +371,12 @@ _term_it_write_buf(u3_utty* uty_u, uv_buf_t buf_u)
   ruq_u->buf_y = (c3_y*)buf_u.base;
 
   c3_w ret_w;
-  if ( 0 != (ret_w = uv_write(&ruq_u->wri_u,
-                     (uv_stream_t*)&(uty_u->pop_u),
-                     &buf_u, 1,
-                              _term_write_cb)) )
+  if ( 0 != (ret_w = c3_ws_to_w(uv_write(&ruq_u->wri_u,
+                                         (uv_stream_t*)&(uty_u->pop_u),
+                                         &buf_u, 1,
+                                         _term_write_cb))) )
   {
-    u3l_log("terminal: %s\n", uv_strerror(ret_w));
+    u3l_log("terminal: %s\n", uv_strerror(c3_w_to_ws(ret_w)));
   }
 }
 
@@ -417,7 +417,7 @@ static void
 _term_it_write_txt(u3_utty*    uty_u,
                    const c3_y* hun_y)
 {
-  _term_it_write_bytes(uty_u, strlen((const c3_c*)hun_y), hun_y);
+  _term_it_write_bytes(uty_u, c3_sizet_to_w(strlen((const c3_c*)hun_y)), hun_y);
 }
 
 /* _term_it_write_str(): write null-terminated string, retaining pointer.
@@ -541,7 +541,7 @@ _term_it_path(c3_o fyl, u3_noun pax)
 
   //  measure
   //
-  len_w = strlen(u3_Host.dir_c);
+  len_w = c3_sizet_to_w(strlen(u3_Host.dir_c));
   {
     u3_noun wiz = pax;
 
@@ -585,7 +585,7 @@ _term_it_save(u3_noun pax, u3_noun pad)
 {
   c3_c* pax_c;
   c3_c* bas_c = 0;
-  c3_w  xap_w = u3kb_lent(u3k(pax));
+  c3_w  xap_w = u3a_noun_to_w( u3kb_lent(u3k(pax)));
   u3_noun xap = u3_nul;
   u3_noun urb = c3_s4('.','u','r','b');
   u3_noun put = c3_s3('p','u','t');
@@ -696,7 +696,7 @@ _term_io_suck_char(u3_utty* uty_u, c3_y cay_y)
     }
 #endif
     else if ( cay_y <= 26 ) {
-      _term_io_belt(uty_u, u3nc(c3__ctl, ('a' + (cay_y - 1))));
+      _term_io_belt(uty_u, u3nc(c3__ctl, c3_ws_to_noun('a' + (cay_y - 1))));
     }
     else if ( 27 == cay_y ) {
       tat_u->esc.ape = c3y;
@@ -743,7 +743,7 @@ _term_suck(u3_utty* uty_u, const c3_y* buf, ssize_t siz_i)
       u3_pier_exit(u3_pier_stub());
     }
     else if ( siz_i < 0 ) {
-      u3l_log("term %d: read: %s\n", uty_u->tid_l, uv_strerror(siz_i));
+      u3l_log("term %d: read: %s\n", uty_u->tid_l, uv_strerror(c3_ds_to_ws(siz_i)));
     }
     else {
       c3_i i;
@@ -821,7 +821,7 @@ _term_show_spinner(u3_utty* uty_u, c3_d lag_d)
     cur_c += strlen(dal_c);
     sol_w += 1;  //  length of dal_c (utf-32)
 
-    c3_w wel_w = strlen(why_c);
+    c3_w wel_w = c3_sizet_to_w(strlen(why_c));
     strcpy(cur_c, why_c);
     cur_c += wel_w;
     sol_w += wel_w;
@@ -959,7 +959,7 @@ _term_spinner_cb(void* ptr_v)
 
       if (now_d < eve_d) {
         uv_mutex_unlock(&uty_u->tat_u.mex_u);
-        usleep(eve_d - now_d);
+        usleep( c3_d_to_w(eve_d - now_d) );
       }
       else {
         _term_show_spinner(uty_u, now_d - eve_d);
@@ -1109,13 +1109,13 @@ _term_ef_blit(u3_utty* uty_u,
 
     case c3__hop: {
       if ( c3n == u3_Host.ops_u.dem ) {
-        _term_it_show_cursor(uty_u, u3t(blt));
+        _term_it_show_cursor(uty_u, u3a_noun_to_w(u3t(blt)));
       }
     } break;
 
     case c3__lin: {
       u3_noun lin = u3t(blt);
-      c3_w    len_w = u3kb_lent(u3k(lin));
+      c3_w    len_w = u3a_noun_to_w(u3kb_lent(u3k(lin)));
       c3_w*   lin_w = c3_malloc(4 * len_w);
 
       {
@@ -1297,13 +1297,15 @@ u3_term_tape_to(FILE *fil_f, u3_noun tep)
   u3_noun tap = tep;
 
   while ( u3_nul != tap ) {
-    c3_c car_c;
+    c3_y car_y;
 
     if ( u3h(tap) >= 127 ) {
-      car_c = '?';
-    } else car_c = u3h(tap);
+      car_y = '?';
+    } else {
+      car_y = u3a_noun_to_y(u3h(tap));
+    }
 
-    putc(car_c, fil_f);
+    putc(car_y, fil_f);
     tap = u3t(tap);
   }
   u3z(tep);

@@ -132,7 +132,7 @@ _t_samp_process(u3_road* rod_u)
           len_w += 1;
         }
         else {
-          u3_assure(u3a_is_cat(old));
+          u3_assure(u3a_is_direct_l(old));
 
           u3z(muf);
           while ( len_w > (old + 1) ) {
@@ -186,8 +186,8 @@ u3t_samp(void)
   }
 
   c3_w old_wag = u3C.wag_w;
-  u3C.wag_w &= ~u3o_debug_cpu;
-  u3C.wag_w &= ~u3o_trace;
+  u3C.wag_w &= ~ (c3_w) u3o_debug_cpu;
+  u3C.wag_w &= ~ (c3_w) u3o_trace;
 
   static int home = 0;
   static int away = 0;
@@ -289,7 +289,7 @@ u3t_trace_open(c3_c* dir_c)
   snprintf(lif_c, 2048, "%s/%d.json", fil_c, u3_Host.tra_u.fun_w);
 
   u3_Host.tra_u.fil_u = fopen(lif_c, "w");
-  u3_Host.tra_u.nid_w = (int)getpid();
+  u3_Host.tra_u.nid_w = c3_ws_to_w(getpid());
 
   fprintf(u3_Host.tra_u.fil_u, "[ ");
 
@@ -339,7 +339,7 @@ c3_d u3t_trace_time()
 {
   struct timeval tim_tv;
   gettimeofday(&tim_tv, 0);
-  return 1000000ULL * tim_tv.tv_sec + tim_tv.tv_usec;
+  return 1000000ULL * c3_ds_to_d(tim_tv.tv_sec) + c3_ds_to_d(tim_tv.tv_usec);
 }
 
 /* u3t_nock_trace_push(): push a trace onto the trace stack; returns yes if pushed.
@@ -427,10 +427,10 @@ u3t_event_trace(const c3_c* name, c3_c type)
 void
 u3t_print_steps(c3_c* cap_c, c3_d sep_d)
 {
-  c3_w gib_w = (sep_d / 1000000000ULL);
-  c3_w mib_w = (sep_d % 1000000000ULL) / 1000000ULL;
-  c3_w kib_w = (sep_d % 1000000ULL) / 1000ULL;
-  c3_w bib_w = (sep_d % 1000ULL);
+  c3_w gib_w = c3_d_to_w(sep_d / 1000000000ULL);
+  c3_w mib_w = c3_d_to_w((sep_d % 1000000000ULL) / 1000000ULL);
+  c3_w kib_w = c3_d_to_w((sep_d % 1000000ULL) / 1000ULL);
+  c3_w bib_w = c3_d_to_w(sep_d % 1000ULL);
 
   //  XX prints to stderr since it's called on shutdown, daemon may be gone
   //

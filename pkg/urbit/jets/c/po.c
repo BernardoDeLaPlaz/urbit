@@ -10,21 +10,25 @@
   _po_find(u3_noun buf,
            u3_noun a)
   {
-    if ( !_(u3a_is_cat(a)) ) {
+    if ( !_(u3a_is_direct_l(a)) ) {
       return u3_nul;
     }
     else {
       c3_w i_w;
-      c3_w a_w = a;
+      c3_d a_d = a;
 
       for ( i_w = 0; i_w < 256; i_w++ ) {
         c3_y byt_y[3];
-        c3_w but_w;
+        c3_d but_d;
 
         u3r_bytes((i_w * 3), 3, byt_y, buf);
-        but_w = (byt_y[0] | (byt_y[1] << 8) | (byt_y[2] << 16));
+        but_d = (
+                 ((c3_d) byt_y[0]) |
+                 (((c3_d) byt_y[1]) << 8) |
+                 (((c3_d) byt_y[2]) << 16)
+                 );
 
-        if ( but_w == a_w ) {
+        if ( but_d == a_d ) {
           return u3nc(u3_nul, i_w);
         }
       }
@@ -78,9 +82,12 @@
     }
     else {
       c3_y byt_y[3];
-
-      u3r_bytes((a * 3), 3, byt_y, buf);
-      return (byt_y[0] | (byt_y[1] << 8) | (byt_y[2] << 16));
+      c3_w a_w = (c3_w) a;  // NOTFORCHECKIN  <--- this is dubious
+      u3r_bytes((a_w * 3), 3, byt_y, buf);
+      u3_noun ret = ((c3_d)  byt_y[0] |
+                     ((c3_d) byt_y[1] << 8) |
+                     ((c3_d) byt_y[2] << 16));
+      return(ret);
     }
   }
   u3_noun
@@ -97,8 +104,13 @@
       return u3m_bail(c3__exit);
     } else {
       c3_y byt_y[3];
+      c3_w a_w = (c3_w) a;  // NOTFORCHECKIN  <--- this is dubious
 
-      u3r_bytes((a * 3), 3, byt_y, buf);
-      return (byt_y[0] | (byt_y[1] << 8) | (byt_y[2] << 16));
+      u3r_bytes((a_w * 3), 3, byt_y, buf);
+      u3_noun ret = ((c3_d)  byt_y[0] |
+                     ((c3_d) byt_y[1] << 8) |
+                     ((c3_d) byt_y[2] << 16));
+      return(ret);
+
     }
   }

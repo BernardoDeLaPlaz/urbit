@@ -39,7 +39,7 @@
     //
     u3r_bytes(0, len_w, key_y, key);
 
-    MurmurHash3_x86_32(key_y, len_w, seed_w, &out_w);
+    MurmurHash3_x86_32(key_y, (int) len_w, seed_w, &out_w);  // needed for API 
 
     u3a_free(key_y);
     return u3i_words(1, &out_w);

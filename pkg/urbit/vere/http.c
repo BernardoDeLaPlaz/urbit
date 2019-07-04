@@ -64,7 +64,7 @@ _http_vec_to_meth(h2o_iovec_t vec_u)
 static u3_noun
 _http_vec_to_atom(h2o_iovec_t vec_u)
 {
-  return u3i_bytes(vec_u.len, (const c3_y*)vec_u.base);
+  return u3i_bytes( c3_d_to_w(vec_u.len), (const c3_y*)vec_u.base);
 }
 
 /* _http_vec_to_octs(): convert h2o_iovec_t to (unit octs)
@@ -91,11 +91,11 @@ _http_vec_from_octs(u3_noun oct)
   }
 
   //  2GB max
-  if ( c3n == u3a_is_cat(u3h(u3t(oct))) ) {
+  if ( c3n == u3a_is_direct_l(u3h(u3t(oct))) ) {
     u3m_bail(c3__fail);
   }
 
-  c3_w len_w  = u3h(u3t(oct));
+  c3_w len_w  = u3a_noun_to_w(u3h(u3t(oct)));
   c3_y* buf_y = c3_malloc(1 + len_w);
   buf_y[len_w] = 0;
 
@@ -365,7 +365,7 @@ _http_req_respond(u3_hreq* req_u, u3_noun sas, u3_noun hed, u3_noun bod)
 
   h2o_req_t* rec_u = req_u->rec_u;
 
-  rec_u->res.status = sas;
+  rec_u->res.status = u3a_noun_to_ws(sas);
   rec_u->res.reason = (sas < 200) ? "weird" :
                       (sas < 300) ? "ok" :
                       (sas < 400) ? "moved" :
@@ -627,7 +627,7 @@ _http_serv_link(u3_http* htp_u)
     htp_u->sev_l = 1 + u3_Host.htp_u->sev_l;
   }
   else {
-    htp_u->sev_l = u3A->sev_l;
+    htp_u->sev_l = u3a_noun_to_l(u3A->sev_l);
   }
 
   htp_u->nex_u = u3_Host.htp_u;
@@ -949,7 +949,7 @@ _http_serv_init_h2o(SSL_CTX* tls_u, c3_o log, c3_o red)
     u3_noun now = u3dc("scot", c3__da, u3k(u3A->now));
     c3_c* now_c = u3r_string(now);
     c3_c* nam_c = ".access.log";
-    c3_w len_w = 1 + strlen(pax_c) + 1 + strlen(now_c) + strlen(nam_c);
+    c3_w len_w = 1U + strlen(pax_c) + 1 + strlen(now_c) + strlen(nam_c);
 
     c3_c* paf_c = c3_malloc(len_w);
     snprintf(paf_c, len_w, "%s/%s%s", pax_c, now_c, nam_c);
@@ -1133,7 +1133,7 @@ _http_init_tls(uv_buf_t key_u, uv_buf_t cer_u)
 #endif
 
   {
-    BIO* bio_u = BIO_new_mem_buf(key_u.base, key_u.len);
+    BIO* bio_u = BIO_new_mem_buf(key_u.base, c3_d_to_ws(key_u.len));
     EVP_PKEY* pky_u = PEM_read_bio_PrivateKey(bio_u, 0, 0, 0);
     c3_i sas_i = SSL_CTX_use_PrivateKey(tls_u, pky_u);
 
@@ -1152,7 +1152,7 @@ _http_init_tls(uv_buf_t key_u, uv_buf_t cer_u)
   }
 
   {
-    BIO* bio_u = BIO_new_mem_buf(cer_u.base, cer_u.len);
+    BIO* bio_u = BIO_new_mem_buf(cer_u.base, c3_d_to_ws(cer_u.len));
     X509* xer_u = PEM_read_bio_X509_AUX(bio_u, 0, 0, 0);
     c3_i sas_i = SSL_CTX_use_certificate(tls_u, xer_u);
 
@@ -1187,7 +1187,7 @@ static void
 _http_write_ports_file(c3_c *pax_c)
 {
   c3_c* nam_c = ".http.ports";
-  c3_w len_w = 1 + strlen(pax_c) + 1 + strlen(nam_c);
+  c3_w len_w = c3_d_to_w(1 + strlen(pax_c) + 1 + strlen(nam_c));
 
   c3_c* paf_c = c3_malloc(len_w);
   snprintf(paf_c, len_w, "%s/%s", pax_c, nam_c);
@@ -1218,7 +1218,7 @@ static void
 _http_release_ports_file(c3_c *pax_c)
 {
   c3_c* nam_c = ".http.ports";
-  c3_w len_w = 1 + strlen(pax_c) + 1 + strlen(nam_c);
+  c3_w len_w = c3_d_to_w(1 + strlen(pax_c) + 1 + strlen(nam_c));
 
   c3_c* paf_c = c3_malloc(len_w);
   snprintf(paf_c, len_w, "%s/%s", pax_c, nam_c);
@@ -1888,13 +1888,13 @@ _proxy_read_downstream_cb(uv_stream_t* don_u,
 
   if ( 0 > siz_w ) {
     if ( UV_EOF != siz_w ) {
-      u3l_log("proxy: read downstream: %s\n", uv_strerror(siz_w));
+      u3l_log("proxy: read downstream: %s\n", uv_strerror( c3_ds_to_ws(siz_w)));
     }
     _proxy_conn_close(con_u);
   }
   else {
     _proxy_write(con_u, (uv_stream_t*)con_u->upt_u,
-                 uv_buf_init(buf_u->base, siz_w));
+                 uv_buf_init(buf_u->base, c3_ds_to_w(siz_w)));
   }
 }
 
@@ -1909,13 +1909,13 @@ _proxy_read_upstream_cb(uv_stream_t* upt_u,
 
   if ( 0 > siz_w ) {
     if ( UV_EOF != siz_w ) {
-      u3l_log("proxy: read upstream: %s\n", uv_strerror(siz_w));
+      u3l_log("proxy: read upstream: %s\n", uv_strerror(c3_ds_to_ws(siz_w)));
     }
     _proxy_conn_close(con_u);
   }
   else {
     _proxy_write(con_u, (uv_stream_t*)&(con_u->don_u),
-                 uv_buf_init(buf_u->base, siz_w));
+                 uv_buf_init(buf_u->base, c3_ds_to_w(siz_w)));
   }
 }
 
@@ -2192,14 +2192,14 @@ _proxy_wcon_peek_read_cb(uv_stream_t* upt_u,
 
   if ( 0 > siz_w ) {
     if ( UV_EOF != siz_w ) {
-      u3l_log("proxy: ward peek: %s\n", uv_strerror(siz_w));
+      u3l_log("proxy: ward peek: %s\n", uv_strerror(c3_ds_to_ws(siz_w)));
     }
     _proxy_wcon_close(won_u);
   }
   else {
     uv_read_stop(upt_u);
 
-    c3_w len_w = rev_u->non_u.len;
+    c3_w len_w = c3_d_to_w(rev_u->non_u.len);
 
     if ( ((len_w + 1) != siz_w) ||
          (len_w != buf_u->base[0]) ||
@@ -2324,7 +2324,7 @@ _proxy_ward_start(u3_pcon* con_u, u3_noun sip)
 
   struct sockaddr_in add_u;
   c3_i add_i = sizeof(add_u);
-  memset(&add_u, 0, add_i);
+  memset(&add_u, 0, c3_ws_to_d(add_i));
   add_u.sin_family = AF_INET;
   add_u.sin_addr.s_addr = INADDR_ANY;
   add_u.sin_port = 0;  // first available
@@ -2464,7 +2464,7 @@ _proxy_ward_resolve(u3_warc* cli_u)
   if ( 0 == cli_u->hot_c ) {
     u3_noun sip = u3dc("scot", 'p', u3i_chubs(2, cli_u->who_d));
     c3_c* sip_c = u3r_string(sip);
-    c3_w len_w = 1 + strlen(sip_c) + strlen(PROXY_DOMAIN);
+    c3_w len_w = c3_d_to_w(1U + strlen(sip_c) + strlen(PROXY_DOMAIN));
     cli_u->hot_c = c3_malloc(len_w);
     // incremented to skip '~'
     snprintf(cli_u->hot_c, len_w, "%s.%s", sip_c + 1, PROXY_DOMAIN);
@@ -2504,7 +2504,7 @@ _proxy_parse_host(const uv_buf_t* buf_u, c3_c** hot_c)
     c3_i sas_i;
 
     sas_i = phr_parse_request(buf_u->base, len_t, &met_c, &met_t,
-                              &pat_c, &pat_t, &ver_i, hed_u, &hed_t, las_i);
+                              &pat_c, &pat_t, &ver_i, hed_u, &hed_t, c3_ws_to_d(las_i));
 
     switch ( sas_i ) {
       case -1: return u3_pars_fail;
@@ -2524,7 +2524,7 @@ _proxy_parse_host(const uv_buf_t* buf_u, c3_c** hot_c)
         c3_c* val_c;
         c3_c* por_c;
 
-        val_c = c3_malloc(1 + hed_u[i].value_len);
+        val_c = c3_malloc(1U + hed_u[i].value_len);
         val_c[hed_u[i].value_len] = 0;
         memcpy(val_c, hed_u[i].value, hed_u[i].value_len);
 
@@ -2578,8 +2578,8 @@ _proxy_parse_ship(c3_c* hot_c)
     else {
       //  length of the first subdomain
       //
-      c3_w dif_w = dom_c - hot_c;
-      c3_w dns_w = strlen(PROXY_DOMAIN);
+      c3_w dif_w = c3_ds_to_w(dom_c - hot_c);
+      c3_w dns_w = c3_ds_to_w(strlen(PROXY_DOMAIN));
 
       //  validate that everything after the first subdomain
       //  matches the proxy domain
@@ -2692,7 +2692,7 @@ _proxy_peek_read_cb(uv_stream_t* don_u,
 
   if ( 0 > siz_w ) {
     if ( UV_EOF != siz_w ) {
-      u3l_log("proxy: peek: %s\n", uv_strerror(siz_w));
+      u3l_log("proxy: peek: %s\n", uv_strerror(c3_ds_to_ws(siz_w)));
     }
     _proxy_conn_close(con_u);
   }
@@ -2700,13 +2700,13 @@ _proxy_peek_read_cb(uv_stream_t* don_u,
     uv_read_stop(don_u);
 
     if ( 0 == con_u->buf_u.base ) {
-      con_u->buf_u = uv_buf_init(buf_u->base, siz_w);
+      con_u->buf_u = uv_buf_init(buf_u->base, c3_ds_to_w(siz_w));
     }
     else {
-      c3_w len_w = siz_w + con_u->buf_u.len;
+      c3_w len_w = c3_ds_to_w(siz_w + c3_d_to_ds(con_u->buf_u.len));
       void* ptr_v = c3_realloc(con_u->buf_u.base, len_w);
 
-      memcpy(ptr_v + con_u->buf_u.len, buf_u->base, siz_w);
+      memcpy(ptr_v + con_u->buf_u.len, buf_u->base, c3_ds_to_d(siz_w));
       con_u->buf_u = uv_buf_init(ptr_v, len_w);
 
       free(buf_u->base);
@@ -2866,7 +2866,7 @@ u3_http_ef_that(u3_noun tat)
 
   if ( ( c3n == u3r_qual(tat, &sip, &por, &sec, &non) ) ||
        ( c3n == u3ud(sip) ) ||
-       ( c3n == u3a_is_cat(por) ) ||
+       ( c3n == u3a_is_direct_l(por) ) ||
        !( c3y == sec || c3n == sec ) ||
        ( c3n == u3ud(non) ) ) {
     u3l_log("http: that: invalid card\n");

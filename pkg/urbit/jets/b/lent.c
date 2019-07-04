@@ -6,6 +6,8 @@
 
 /* functions
 */
+
+// return length of right-descending list
   u3_noun
   u3qb_lent(u3_noun a)
   {
@@ -20,7 +22,7 @@
         return u3m_bail(c3__exit);
       }
       else {
-        len = u3i_vint(len);
+        len = u3i_vint(len);  // +1
         a = u3t(a);
       }
     }

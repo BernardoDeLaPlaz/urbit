@@ -31,23 +31,23 @@
     out_y = u3a_malloc(len_out_w);
 
     {
-      int i = 15;
+      unsigned int i = 15;
 
       do {
-        key_y[i] = u3r_byte(15-i, key);
+        key_y[i] = u3r_byte( 15-i, key);
         i--;
       } while (i >= 0);
     }
     {
-      int i = 15;
+      unsigned int i = 15;
 
       do {
-        iv_y[i] = u3r_byte(15-i, iv);
+        iv_y[i] = u3r_byte(  15-i, iv);
         i--;
       } while (i >= 0);
     }
     {
-      int i = len_msg_w - 1;
+      unsigned int i = (unsigned int) (len_msg_w - 1);
 
       do {
         msg_y[i] = u3r_byte((len_msg_w - 1)-i, msg);
@@ -65,7 +65,7 @@
     /*  array reverse - we can write backwards u3i_bytes   *
      *  in the unlikely event that this becomes a problem  */
     {
-      int i = len_out_w - 1;
+      unsigned int i = len_out_w - 1;
       int j = 0;
       c3_y tmp;
 
@@ -121,7 +121,7 @@
     out_y = u3a_malloc(len_out_w);
 
     {
-      int i = 15;
+      unsigned int i = 15;
 
       do {
         key_y[i] = u3r_byte(15-i, key);
@@ -129,7 +129,7 @@
       } while (i >= 0);
     }
     {
-      int i = 15;
+      unsigned int i = 15;
 
       do {
         iv_y[i] = u3r_byte(15-i, iv);
@@ -137,10 +137,10 @@
       } while (i >= 0);
     }
     {
-      int i = len_msg_w - 1;
+      unsigned int i = len_msg_w - 1;
 
       do {
-        msg_y[i] = u3r_byte((len_msg_w - 1)-i, msg);
+        msg_y[i] = u3r_byte( (len_msg_w - 1)-i, msg);
         i--;
       } while (i >= 0);
     }
@@ -155,8 +155,8 @@
     /*  array reverse - we can write backwards u3i_bytes   *
      *  in the unlikely event that this becomes a problem  */
     {
-      int i = len_out_w - 1;
-      int j = 0;
+      unsigned int i = len_out_w - 1;
+      unsigned int j = 0;
       c3_y tmp;
 
       do {
@@ -211,7 +211,7 @@
     out_y = u3a_malloc(len_out_w);
 
     {
-      int i = 23;
+      unsigned int i = 23;
 
       do {
         key_y[i] = u3r_byte(23-i, key);
@@ -219,7 +219,7 @@
       } while (i >= 0);
     }
     {
-      int i = 15;
+      unsigned int i = 15;
 
       do {
         iv_y[i] = u3r_byte(15-i, iv);
@@ -227,7 +227,7 @@
       } while (i >= 0);
     }
     {
-      int i = len_msg_w - 1;
+      unsigned int i = len_msg_w - 1;
 
       do {
         msg_y[i] = u3r_byte((len_msg_w - 1)-i, msg);
@@ -245,7 +245,7 @@
     /*  array reverse - we can write backwards u3i_bytes   *
      *  in the unlikely event that this becomes a problem  */
     {
-      int i = len_out_w - 1;
+      unsigned int i = len_out_w - 1;
       int j = 0;
       c3_y tmp;
 
@@ -301,7 +301,7 @@
     out_y = u3a_malloc(len_out_w);
 
     {
-      int i = 23;
+      unsigned int i = 23;
 
       do {
         key_y[i] = u3r_byte(23-i, key);
@@ -309,7 +309,7 @@
       } while (i >= 0);
     }
     {
-      int i = 15;
+      unsigned int i = 15;
 
       do {
         iv_y[i] = u3r_byte(15-i, iv);
@@ -317,7 +317,7 @@
       } while (i >= 0);
     }
     {
-      int i = len_msg_w - 1;
+      unsigned int i = len_msg_w - 1;
 
       do {
         msg_y[i] = u3r_byte((len_msg_w - 1)-i, msg);
@@ -335,8 +335,8 @@
     /*  array reverse - we can write backwards u3i_bytes   *
      *  in the unlikely event that this becomes a problem  */
     {
-      int i = len_out_w - 1;
-      int j = 0;
+      unsigned int i = len_out_w - 1;
+      unsigned int j = 0;
       c3_y tmp;
 
       do {
@@ -391,7 +391,7 @@
     out_y = u3a_malloc(len_out_w);
 
     {
-      int i = 31;
+      unsigned int i = 31;
 
       do {
         key_y[i] = u3r_byte(31-i, key);
@@ -399,7 +399,7 @@
       } while (i >= 0);
     }
     {
-      int i = 15;
+      unsigned int i = 15;
 
       do {
         iv_y[i] = u3r_byte(15-i, iv);
@@ -407,7 +407,7 @@
       } while (i >= 0);
     }
     {
-      int i = len_msg_w - 1;
+      unsigned int i = len_msg_w - 1;
 
       do {
         msg_y[i] = u3r_byte((len_msg_w - 1)-i, msg);
@@ -425,7 +425,7 @@
     /*  array reverse - we can write backwards u3i_bytes   *
      *  in the unlikely event that this becomes a problem  */
     {
-      int i = len_out_w - 1;
+      unsigned int i = len_out_w - 1;
       int j = 0;
       c3_y tmp;
 
@@ -481,7 +481,7 @@
     out_y = u3a_malloc(len_out_w);
 
     {
-      int i = 31;
+      unsigned int i = 31;
 
       do {
         key_y[i] = u3r_byte(31-i, key);
@@ -489,7 +489,7 @@
       } while (i >= 0);
     }
     {
-      int i = 15;
+      unsigned int i = 15;
 
       do {
         iv_y[i] = u3r_byte(15-i, iv);
@@ -497,7 +497,7 @@
       } while (i >= 0);
     }
     {
-      int i = len_msg_w - 1;
+      unsigned int i = len_msg_w - 1;
 
       do {
         msg_y[i] = u3r_byte((len_msg_w - 1)-i, msg);
@@ -515,8 +515,8 @@
     /*  array reverse - we can write backwards u3i_bytes   *
      *  in the unlikely event that this becomes a problem  */
     {
-      int i = len_out_w - 1;
-      int j = 0;
+      unsigned int i = len_out_w - 1;
+      unsigned int j = 0;
       c3_y tmp;
 
       do {

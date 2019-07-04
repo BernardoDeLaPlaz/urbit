@@ -14,7 +14,7 @@ u3x_good(u3_weak som)
   else return som;
 }
 
-/* u3x_at (u3at): fragment.
+/* u3x_at (u3at): find sub-tree fragment of tree 'som' at axis 'axe'
 */
 u3_noun
 u3x_at(u3_noun axe, u3_noun som)

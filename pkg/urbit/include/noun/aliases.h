@@ -6,7 +6,11 @@
   **/
     /* u3_none - u3_noun which is not a noun.
     */
-#     define u3_none  (u3_noun)0xffffffff
+#     define u3_none  (u3_noun) (~0)   
+
+
+     /* stash a 32 bit integer into the LSB of a noun */
+#     define u3_w_to_noun(w)  ( (u3_noun) (0x00000000ffffffff & w))  /* ((1 << 32) - 1) */
 
     /* u3_nul: 0, hoon ~.
     */
@@ -26,13 +30,19 @@
 
     /* u3_noun: tagged noun pointer.
     **
-    **  If bit 31 is 0, a u3_noun is a direct 31-bit atom ("cat").
-    **  If bit 31 is 1 and bit 30 0, an indirect atom ("pug").
-    **  If bit 31 is 1 and bit 30 1, an indirect cell ("pom").
+    **  If bit 63 is 0, a u3_noun is a direct 63-bit atom ("cat").
+    **  If bit 63 is 1, is indirect ("dog"), and is either an indirect atom or an indirect cell
+    **  If bit 63 is 1 and bit 62 0, an indirect atom ("pug" - a type of dog).
+    **  If bit 63 is 1 and bit 62 1, an indirect cell ("pom" - a type of dog).
     **
-    ** Bits 0-29 are a word offset against u3_Loom (u3_post).
+    ** In indirect nouns, bits 0-31 are a word offset against u3_Loom (u3_post).
+	**
+	** It is an error to have an indirect atom address longer than 32
+	** bits (because we are not making the loom a memory mapped buffer
+	** of size 2^62 ).
     */
-      typedef c3_w u3_noun;
+
+     typedef c3_d u3_noun;
 
     /* u3_weak: u3_noun which may be u3_none (not a noun).
     */
@@ -86,8 +96,8 @@
 
     /* u3du(), u3ud(): noun/cell test.
     */
-#     define u3du(som)         (u3r_du(som))
-#     define u3ud(som)         (u3r_ud(som))
+#     define u3du(som)         (u3a_is_indirect_cell_l(som))
+#     define u3ud(som)         (u3a_is_atom(som))
 
     /* u3k(), u3z(): reference counts.
     */
@@ -105,16 +115,5 @@
     */
 #     define  u3to(type, x) ((type *) u3a_into(x))
 #     define  u3tn(type, x) (x == 0) ? (void *)0 :  ((type *) u3a_into(x))
-#     define  u3of(type, x) (u3a_outa((type *)x))
+#     define  u3of(type, x) (u3a_outa((type *)x))  // first arg is type, 2nd is noun
 
-
-/* turn off address sanitizer to increase speed
-   https://en.wikipedia.org/wiki/AddressSanitizer
-*/
-#if GCC
-	/* gcc style */
-    #define NO_SANITIZE_ADDRESS  __attribute__((no_sanitize_address))
-#else
-    /* Clang style */
-    #define NO_SANITIZE_ADDRESS  __attribute__((no_sanitize("address")))
-#endif

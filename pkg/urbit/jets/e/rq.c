@@ -60,7 +60,13 @@
             u3_atom r)
   {
     union quad c, d, e;
-    _set_rounding(r);
+
+    if (r > c3_w_MAX) {
+      u3m_bail(c3__fail);
+    }
+    c3_w r_w = (c3_w) r; // ok; tested size above
+    
+    _set_rounding(r_w);
     c.c = alloca(16);
     d.c = alloca(16);
     e.c = alloca(16);
@@ -98,7 +104,13 @@
             u3_atom r)
   {
     union quad c, d, e;
-    _set_rounding(r);
+
+    if (r > c3_w_MAX) {
+      u3m_bail(c3__fail);
+    }
+    c3_w r_w = (c3_w) r; // ok; tested size above
+
+    _set_rounding(r_w);
     c.c = alloca(16);
     d.c = alloca(16);
     e.c = alloca(16);
@@ -136,7 +148,13 @@
             u3_atom r)
   {
     union quad c, d, e;
-    _set_rounding(r);
+
+    if (r > c3_w_MAX) {
+      u3m_bail(c3__fail);
+    }
+    c3_w r_w = (c3_w) r; // ok; tested size above
+
+    _set_rounding(r_w);
     c.c = alloca(16);
     d.c = alloca(16);
     e.c = alloca(16);
@@ -174,7 +192,13 @@
             u3_atom r)
   {
     union quad c, d, e;
-    _set_rounding(r);
+
+    if (r > c3_w_MAX) {
+      u3m_bail(c3__fail);
+    }
+    c3_w r_w = (c3_w) r; // ok; tested size above
+
+    _set_rounding(r_w);
     c.c = alloca(16);
     d.c = alloca(16);
     e.c = alloca(16);
@@ -211,7 +235,12 @@
             u3_atom r)
   {
     union quad c, d;
-    _set_rounding(r);
+    if (r > c3_w_MAX) {
+      u3m_bail(c3__fail);
+    }
+    c3_w r_w = (c3_w) r; // ok; tested size above
+
+    _set_rounding(r_w);
     c.c = alloca(16);
     d.c = alloca(16);
 
@@ -247,7 +276,13 @@
             u3_atom r)
   {
     union quad d, e, f, g;
-    _set_rounding(r);
+
+    if (r > c3_w_MAX) {
+      u3m_bail(c3__fail);
+    }
+    c3_w r_w = (c3_w) r; // ok; tested size above
+
+    _set_rounding(r_w);
     d.c = alloca(16);
     e.c = alloca(16);
     f.c = alloca(16);

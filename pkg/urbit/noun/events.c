@@ -127,7 +127,8 @@ u3e_fault(void* adr_v, c3_i ser_i)
     return 0;
   }
   else {
-    c3_w off_w = (adr_w - u3_Loom);
+    //    c3_w off_w = (adr_w - u3_Loom);
+    c3_w off_w = c3_wptr_minus_wptr(adr_w, u3_Loom);
     c3_w pag_w = off_w >> u3a_page;
     c3_w blk_w = (pag_w >> 5);
     c3_w bit_w = (pag_w & 31);
@@ -142,14 +143,21 @@ u3e_fault(void* adr_v, c3_i ser_i)
     }
 #endif
 
-    if ( 0 != (u3P.dit_w[blk_w] & (1 << bit_w)) ) {
+#define RANGE_CHECK_TOUCHED_ARRAY 0
+    
+    #if RANGE_CHECK_TOUCHED_ARRAY
+    if (blk_w > (u3a_pages >> 5)){
+      fprintf(stderr, "illegal index into u3P.dit_w[blk_w] ; expect max %x, actual %x \n", (u3a_pages >> 5), blk_w);
+    }
+    #endif
+    if ( 0 != (u3P.dit_w[blk_w] & (1U << bit_w)) ) {
       u3l_log("strange page: %d, at %p, off %x\r\n",
               pag_w, adr_w, off_w);
       abort();
     }
 
-    c3_assert(0 == (u3P.dit_w[blk_w] & (1 << bit_w)));
-    u3P.dit_w[blk_w] |= (1 << bit_w);
+    c3_assert(0 == (u3P.dit_w[blk_w] & (1U << bit_w)));
+    u3P.dit_w[blk_w] = c3_d_to_w((c3_d)u3P.dit_w[blk_w] | (c3_d)(1U << bit_w));
 
     if ( -1 == mprotect((void *)(u3_Loom + (pag_w << u3a_page)),
                         (1 << (u3a_page + 2)),
@@ -194,7 +202,7 @@ _ce_image_open(u3e_image* img_u)
       return c3n;
     }
     else {
-      c3_d siz_d = buf_u.st_size;
+      c3_d siz_d = c3_ds_to_d(buf_u.st_size);
       c3_d pgs_d = (siz_d + (c3_d)((1 << (u3a_page + 2)) - 1)) >>
                    (c3_d)(u3a_page + 2);
 
@@ -220,8 +228,9 @@ _ce_image_open(u3e_image* img_u)
 static void
 _ce_patch_write_control(u3_ce_patch* pat_u)
 {
-  c3_w len_w = sizeof(u3e_control) +
-               (pat_u->con_u->pgs_w * sizeof(u3e_line));
+  c3_w len_w = c3_d_to_w( ((c3_d) sizeof(u3e_control)) +
+                          ((c3_d) (pat_u->con_u->pgs_w * sizeof(u3e_line)))
+                          );
 
   if ( len_w != write(pat_u->ctl_i, pat_u->con_u, len_w) ) {
     c3_assert(0);
@@ -424,7 +433,7 @@ _ce_patch_count_page(c3_w pag_w,
   c3_w blk_w = (pag_w >> 5);
   c3_w bit_w = (pag_w & 31);
 
-  if ( u3P.dit_w[blk_w] & (1 << bit_w) ) {
+  if( ( (c3_d) u3P.dit_w[blk_w]) & ((c3_d)(1 << bit_w)) ) {
     pgc_w += 1;
   }
   return pgc_w;
@@ -440,7 +449,7 @@ _ce_patch_save_page(u3_ce_patch* pat_u,
   c3_w blk_w = (pag_w >> 5);
   c3_w bit_w = (pag_w & 31);
 
-  if ( u3P.dit_w[blk_w] & (1 << bit_w) ) {
+  if ( ( u3P.dit_w[blk_w]) & (1U << bit_w) ) {
     c3_w* mem_w = u3_Loom + (pag_w << u3a_page);
 
     pat_u->con_u->mem_u[pgc_w].pag_w = pag_w;
@@ -459,7 +468,7 @@ _ce_patch_save_page(u3_ce_patch* pat_u,
       c3_assert(0);
     }
 
-    u3P.dit_w[blk_w] &= ~(1 << bit_w);
+    u3P.dit_w[blk_w] &= ~(1U << bit_w);
     pgc_w += 1;
   }
   return pgc_w;
@@ -476,12 +485,12 @@ _ce_patch_junk_page(u3_ce_patch* pat_u,
 
   // u3l_log("protect b: page %d\r\n", pag_w);
   if ( -1 == mprotect(u3_Loom + (pag_w << u3a_page),
-                      (1 << (u3a_page + 2)),
+                      (1U << (u3a_page + 2)),
                       PROT_READ) )
   {
     c3_assert(0);
   }
-  u3P.dit_w[blk_w] &= ~(1 << bit_w);
+  u3P.dit_w[blk_w] &= ~(1U << bit_w);
 }
 
 /* u3e_dirty(): count dirty pages.
@@ -633,9 +642,9 @@ _ce_patch_apply(u3_ce_patch* pat_u)
   //u3l_log("image: sou_w %d, new %d\r\n", u3P.sou_u.pgs_w, pat_u->con_u->sou_w);
 
   if ( u3P.nor_u.pgs_w > pat_u->con_u->nor_w ) {
-    c3_w ret_w;
-    ret_w = ftruncate(u3P.nor_u.fid_i, u3P.nor_u.pgs_w << (u3a_page + 2));
-    if (ret_w){
+    c3_ws ret_ws;
+    ret_ws = ftruncate(u3P.nor_u.fid_i, u3P.nor_u.pgs_w << (u3a_page + 2));
+    if (ret_ws){
       perror("_ce_patch_apply");
       c3_assert(0);
     }
@@ -643,9 +652,8 @@ _ce_patch_apply(u3_ce_patch* pat_u)
   u3P.nor_u.pgs_w = pat_u->con_u->nor_w;
 
   if ( u3P.sou_u.pgs_w > pat_u->con_u->sou_w ) {
-    c3_w ret_w;
-    ret_w = ftruncate(u3P.sou_u.fid_i, u3P.sou_u.pgs_w << (u3a_page + 2));
-    if (ret_w){
+    c3_ws ret_ws = ftruncate(u3P.sou_u.fid_i, u3P.sou_u.pgs_w << (u3a_page + 2));
+    if (ret_ws){
       perror("_ce_patch_apply");
       c3_assert(0);
     }

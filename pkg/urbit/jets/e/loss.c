@@ -65,7 +65,12 @@
         u3_noun  hev)
   {
     loc_u->hel = hel;
-    loc_u->lel_w = u3kb_lent(u3k(hel));
+
+    u3_noun len = u3kb_lent(u3k(hel));
+    if (len > c3_w_MAX) {
+      u3m_bail(c3__fail);
+    }
+    loc_u->lel_w = (c3_w) len;
 
     //  Read hev into array.
     {

@@ -6,14 +6,22 @@
 
 /* functions
 */
+
+  /* do (numeric) addition of atom a + atom b
+     handles direct and indirect cases
+     a, b -> a + b
+   */
   u3_noun
   u3qa_add(u3_atom a,
            u3_atom b)
   {
-    if ( _(u3a_is_cat(a)) && _(u3a_is_cat(b)) ) {
-      c3_w c = a + b;
 
-      return u3i_words(1, &c);
+    // if they're both direct, do the math locally and then imprison
+    // into a noun (prob also direct, but not necessarilly!)
+    if ( _(u3a_is_direct_l(a)) && _(u3a_is_direct_l(b)) ) {
+      c3_d c = a + b;
+
+      return u3i_words(2, (c3_w *) &c); // <---- is this OK? // NOTFORCHECKIN
     }
     else if ( 0 == a ) {
       return u3k(b);
@@ -30,6 +38,9 @@
       return u3i_mp(a_mp);
     }
   }
+  /* do (numeric) addition of two atoms in a cell
+     [ a b ] -> a + b
+   */
   u3_noun
   u3wa_add(u3_noun cor)
   {

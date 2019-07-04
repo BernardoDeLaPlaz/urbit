@@ -13,23 +13,24 @@
     if ( u3_nul == b ) {
       return u3_nul;
     }
-    else if ( !_(u3a_is_cat(a)) ) {
+    else if ( !_(u3a_is_direct_l(a)) ) {
       return u3m_bail(c3__fail);
     }
     else {
       u3_noun acc = u3_nul;
-      c3_w i_w = a;
+      c3_d i_d = a;
 
-      if ( !i_w )
+      if ( !i_d ){
         return u3_nul;
+      }
 
-      while ( i_w ) {
+      while ( i_d ) {
         if ( c3n == u3du(b) ) {
           return u3kb_flop(acc);
         }
         acc = u3nc(u3k(u3h(b)), acc);
         b = u3t(b);
-        i_w--;
+        i_d--;
       }
 
       return u3kb_flop(acc);

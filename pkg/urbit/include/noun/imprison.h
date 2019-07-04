@@ -4,6 +4,7 @@
 */
       /* General constructors.
       */
+
         /* u3i_words():
         **
         **   Copy [a] words from [b] into an atom.

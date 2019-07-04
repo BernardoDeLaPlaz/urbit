@@ -60,9 +60,9 @@
             u3_atom r)
   {
     union half c, d, e;
-    _set_rounding(r);
-    c.c = u3r_word(0, a);
-    d.c = u3r_word(0, b);
+    _set_rounding((c3_w) r);  
+    c.c = (c3_s) u3r_word(0, a);  
+    d.c = (c3_s) u3r_word(0, b);  
     e.h = _nan_unify(f16_add(c.h, d.h));
 
     return e.c;
@@ -92,9 +92,9 @@
             u3_atom r)
   {
     union half c, d, e;
-    _set_rounding(r);
-    c.c = u3r_word(0, a);
-    d.c = u3r_word(0, b);
+    _set_rounding((c3_s) r);
+    c.c = (c3_s) u3r_word(0, a);  
+    d.c = (c3_s) u3r_word(0, b);  
     e.h = _nan_unify(f16_sub(c.h, d.h));
 
     return e.c;
@@ -124,9 +124,9 @@
             u3_atom r)
   {
     union half c, d, e;
-    _set_rounding(r);
-    c.c = u3r_word(0, a);
-    d.c = u3r_word(0, b);
+    _set_rounding( (c3_w) r);
+    c.c = (c3_s) u3r_word(0, a);
+    d.c = (c3_s) u3r_word(0, b);
     e.h = _nan_unify(f16_mul(c.h, d.h));
 
     return e.c;
@@ -156,9 +156,9 @@
             u3_atom r)
   {
     union half c, d, e;
-    _set_rounding(r);
-    c.c = u3r_word(0, a);
-    d.c = u3r_word(0, b);
+    _set_rounding( (c3_w) r);
+    c.c = (c3_s) u3r_word(0, a);
+    d.c = (c3_s) u3r_word(0, b);
     e.h = _nan_unify(f16_div(c.h, d.h));
 
     return e.c;
@@ -187,8 +187,8 @@
             u3_atom r)
   {
     union half c, d;
-    _set_rounding(r);
-    c.c = u3r_word(0, a);
+    _set_rounding((c3_w)r);
+    c.c = (c3_s)u3r_word(0, a);
     d.h = _nan_unify(f16_sqrt(c.h));
 
     return d.c;
@@ -218,10 +218,10 @@
             u3_atom r)
   {
     union half d, e, f, g;
-    _set_rounding(r);
-    d.c = u3r_word(0, a);
-    e.c = u3r_word(0, b);
-    f.c = u3r_word(0, c);
+    _set_rounding((c3_w)r);
+    d.c = (c3_s) u3r_word(0, a);
+    e.c = (c3_s) u3r_word(0, b);
+    f.c = (c3_s) u3r_word(0, c);
     g.h = _nan_unify(f16_mulAdd(d.h, e.h, f.h));
 
     return g.c;
@@ -251,8 +251,8 @@
             u3_atom b)
   {
     union half c, d;
-    c.c = u3r_word(0, a);
-    d.c = u3r_word(0, b);
+    c.c = (c3_s) u3r_word(0, a);
+    d.c = (c3_s) u3r_word(0, b);
 
     return __(f16_lt(c.h, d.h));
   }
@@ -280,8 +280,8 @@
             u3_atom b)
   {
     union half c, d;
-    c.c = u3r_word(0, a);
-    d.c = u3r_word(0, b);
+    c.c = (c3_s) u3r_word(0, a);
+    d.c = (c3_s) u3r_word(0, b);
 
     return __(f16_le(c.h, d.h));
   }
@@ -309,8 +309,8 @@
             u3_atom b)
   {
     union half c, d;
-    c.c = u3r_word(0, a);
-    d.c = u3r_word(0, b);
+    c.c = (c3_s) u3r_word(0, a);
+    d.c = (c3_s) u3r_word(0, b);
 
     return __(f16_eq(c.h, d.h));
   }
@@ -338,8 +338,8 @@
             u3_atom b)
   {
     union half c, d;
-    c.c = u3r_word(0, a);
-    d.c = u3r_word(0, b);
+    c.c = (c3_s) u3r_word(0, a);
+    d.c = (c3_s) u3r_word(0, b);
 
     return __(f16_le(d.h, c.h));
   }
@@ -367,8 +367,8 @@
             u3_atom b)
   {
     union half c, d;
-    c.c = u3r_word(0, a);
-    d.c = u3r_word(0, b);
+    c.c = (c3_s) u3r_word(0, a);
+    d.c = (c3_s) u3r_word(0, b);
 
     return __(f16_lt(d.h, c.h));
   }

@@ -11,29 +11,30 @@
            u3_atom b,
            u3_atom c)
   {
-    if ( !_(u3a_is_cat(a)) || (a >= 32) ) {
+    if ( !_(u3a_is_direct_l(a)) || (a >= 32) ) {
       return u3m_bail(c3__fail);
     }
-    else if ( !_(u3a_is_cat(b)) ) {
+    else if ( !_(u3a_is_direct_l(b)) ) {
       return u3m_bail(c3__fail);
     }
     else {
-      c3_g a_g   = a;
-      c3_w b_w   = b;
+      c3_g a_g   = (c3_g) a; // ok, we checked size above
+      c3_d b_d   = b;
       c3_w len_w = u3r_met(a_g, c);
 
       if ( 0 == len_w ) {
         return 0;
       }
-      else if ( (b_w + len_w) < len_w ) {
+      else if ( (b_d + len_w) < len_w ) {
         return u3m_bail(c3__exit);
       }
       else {
-        c3_w* sal_w = u3a_slaq(a_g, (b_w + len_w));
+        c3_w* sal_w = u3a_slaq(a_g, (b_d + len_w));
 
         if ( 0 == sal_w ) {
           return u3m_bail(c3__fail);
         }
+        c3_w b_w = u3a_atom_to_w(b_d);
         u3r_chop(a_g, 0, len_w, b_w, sal_w, c);
 
         // return u3a_moot(sal_w);

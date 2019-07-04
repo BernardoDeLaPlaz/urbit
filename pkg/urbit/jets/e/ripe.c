@@ -10,11 +10,17 @@
   u3_noun
   u3qe_ripe(u3_atom wid, u3_atom dat)
   {
-    c3_assert(_(u3a_is_cat(wid)));
+    c3_assert(_(u3a_is_direct_l(wid)));
     dat = u3qc_rev(3, wid, dat);
 
     c3_y* dat_y = (c3_y*)u3a_malloc(wid);  // msg body
-    u3r_bytes(0, wid, (void*)dat_y, dat);
+
+    if (wid > c3_w_MAX) {
+      u3m_bail(c3__fail);
+    }
+    c3_w wid_w = (c3_w) wid; // ok; tested size above
+
+    u3r_bytes(0, wid_w, (void*)dat_y, dat);
 
     const EVP_MD* rip_u = EVP_ripemd160(); // ripem algorithm
     static EVP_MD_CTX* con_u = NULL;       // context
@@ -34,21 +40,21 @@
     c3_w sil_w;     // signature length
     c3_w ret_w;     // return code
 
-    ret_w = EVP_DigestInit_ex(con_u, rip_u, NULL);
+    ret_w = (c3_w)  EVP_DigestInit_ex(con_u, rip_u, NULL);
     if ( 1 != ret_w ) {
       u3a_free(dat_y);
       u3l_log("\rripe jet: crypto library fail 1\n");
       return u3m_bail(c3__exit);
     }
 
-    ret_w = EVP_DigestUpdate(con_u, (void*)dat_y, wid);
+    ret_w = (c3_w)  EVP_DigestUpdate(con_u, (void*)dat_y, wid);
     u3a_free(dat_y);
     if (1 != ret_w) {
       u3l_log("\rripe jet: crypto library fail 2\n");
       return u3m_bail(c3__exit);
     }
 
-    ret_w = EVP_DigestFinal_ex(con_u, sib_y, &sil_w);
+    ret_w = (c3_w) EVP_DigestFinal_ex(con_u, sib_y, &sil_w);
     if ( 1 != ret_w ) {
       u3l_log("\rripe jet: crypto library fail 3\n");
       return u3m_bail(c3__exit);

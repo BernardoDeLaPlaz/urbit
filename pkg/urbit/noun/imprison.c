@@ -1,7 +1,61 @@
-/* g/i.c
+/* g/i.c 
 **
 */
 #include "all.h"
+
+/* u3i_longs():
+**
+**   Copy [a] 64-bit longs from [b] into an atom.
+*/
+u3_noun
+u3i_doubles(c3_w        a_w,
+            const c3_d*  b_d)
+{
+  /* Strip trailing zeroes.
+  */
+  while ( a_w && !b_d[a_w - 1] ) {
+    a_w--;
+  }
+
+  // if 0 longs copied, then the noun is a simple one: 0
+  if ( !a_w ) {
+    return (u3_noun) 0;
+  }
+
+  // if it will fit into a direct atom, put it in a direct atom
+  if (1 == a_w) {
+    u3_noun ret = b_d[0];
+    if ( u3a_is_cell_b(ret) || u3a_is_indirect_b(ret)) {
+      // if we accidentally created a direct noun that looks like an
+      // indirect noun or a cell, that's no good. Discard, fall through, do it right.
+    } else {
+      return(ret);
+    }
+  }
+
+  /* Allocate, fill, return.
+  */
+  {
+    c3_w*       nov_w = u3a_walloc( (2 * a_w) + c3_wiseof(u3a_atom));
+    u3a_atom* nov_u = (void*)nov_w;
+
+    nov_u->u.mug_w = 0;
+    nov_u->u.newnoun = 0; 
+    nov_u->len_w = (2 * a_w); // a_w is number of 64 bit longs; convert to num 32-bit words
+
+    /* Fill the longs
+    */
+    {
+      c3_w i_w;
+
+      for ( i_w=0; i_w < a_w; i_w++ ) {
+        nov_u->buf_w[i_w * 2]       = u3_noun_bot_w(          b_d[i_w]);
+        nov_u->buf_w[(i_w * 2) + 1] = u3_noun_top_w_downshift(b_d[i_w]);
+      }
+    }
+    return u3a_to_indirect(u3a_outa(nov_w));
+  }
+}
 
 /* u3i_words():
 **
@@ -17,13 +71,25 @@ u3i_words(c3_w        a_w,
     a_w--;
   }
 
-  /* Check for cat.
-  */
+  // if 0 words copied, then the noun is a simple one: 0
   if ( !a_w ) {
-    return 0;
+    return (u3_noun) 0;
   }
-  else if ( (a_w == 1) && !(b_w[0] >> 31) ) {
-    return b_w[0];
+
+  // if it will fit into a direct atom, put it in a direct atom
+   
+  if (1 == a_w) {
+    u3_noun ret = (u3_noun) b_w[0];
+    return(ret);
+  }
+  if (2 == a_w) {
+    u3_noun ret = (u3_noun) b_w[0] | ((u3_noun) b_w[1] << 32);
+    if ( u3a_is_cell_b(ret) || u3a_is_indirect_b(ret)) {
+      // if we accidentally created a direct noun that looks like an
+      // indirect noun or a cell, that's no good. Discard, fall through, do it right.
+    } else {
+      return(ret);
+    }
   }
 
   /* Allocate, fill, return.
@@ -32,7 +98,8 @@ u3i_words(c3_w        a_w,
     c3_w*       nov_w = u3a_walloc(a_w + c3_wiseof(u3a_atom));
     u3a_atom* nov_u = (void*)nov_w;
 
-    nov_u->mug_w = 0;
+    nov_u->u.mug_w = 0;
+    nov_u->u.newnoun = 0;
     nov_u->len_w = a_w;
 
     /* Fill the words.
@@ -44,25 +111,27 @@ u3i_words(c3_w        a_w,
         nov_u->buf_w[i_w] = b_w[i_w];
       }
     }
-    return u3a_to_pug(u3a_outa(nov_w));
+    return u3a_to_indirect(u3a_outa(nov_w));
   }
 }
 
 /* u3i_chubs():
 **
 **   Construct `a` double-words from `b`, LSD first, as an atom.
+**
+**   oddly, ALL nouns so constructed are indirect, even when they would fit in a direct
 */
 u3_atom
 u3i_chubs(c3_w        a_w,
             const c3_d* b_d)
 {
-  c3_w *b_w = c3_malloc(a_w * 8);
+  c3_w *b_w = c3_malloc(a_w * 8); // 8 = sizeof _d
   c3_w i_w;
   u3_atom p;
 
   for ( i_w = 0; i_w < a_w; i_w++ ) {
     b_w[(2 * i_w)] = b_d[i_w] & 0xffffffffULL;
-    b_w[(2 * i_w) + 1] = b_d[i_w] >> 32ULL;
+    b_w[(2 * i_w) + 1] = (c3_w)(b_d[i_w] >> 32ULL);
   }
   p = u3i_words((a_w * 2), b_w);
   free(b_w);
@@ -83,37 +152,58 @@ u3i_bytes(c3_w        a_w,
     a_w--;
   }
 
-  /* Check for cat.
+  /* Check to see if it will fit in a direct noun
   */
-  if ( a_w <= 4 ) {
+
+  #if u3_noun_sizeof != 8
+  #error  "this code will not work unless nounsize == 8"
+  #endif 
+  
+  if ( a_w <= u3_noun_sizeof ) {
     if ( !a_w ) {
       return 0;
     }
     else if ( a_w == 1 ) {
-      return b_y[0];
+      return (  ((u3_noun) b_y[0]) );
     }
     else if ( a_w == 2 ) {
-      return (b_y[0] | (b_y[1] << 8));
+      return (  ((u3_noun) b_y[0]) |  ((u3_noun) b_y[1] << 8) );
     }
     else if ( a_w == 3 ) {
-      return (b_y[0] | (b_y[1] << 8) | (b_y[2] << 16));
+      return (  ((u3_noun) b_y[0]) |  ((u3_noun) b_y[1] << 8) | ((u3_noun) b_y[2] << 16) );
     }
-    else if ( (b_y[3] <= 0x7f) ) {
-      return (b_y[0] | (b_y[1] << 8) | (b_y[2] << 16) | (b_y[3] << 24));
+    else if ( a_w == 4 ) {
+      return (  ((u3_noun) b_y[0]) |  ((u3_noun) b_y[1] << 8) | ((u3_noun) b_y[2] << 16) | ((u3_noun) b_y[3] << 24) );
     }
+    else if ( a_w == 5 ) {
+      return (  ((u3_noun) b_y[0]) |  ((u3_noun) b_y[1] << 8) | ((u3_noun) b_y[2] << 16) | ((u3_noun) b_y[3] << 24) | ((u3_noun) b_y[4] << 32) );
+    }
+    else if ( a_w == 6 ) {
+      return (  ((u3_noun) b_y[0]) |  ((u3_noun) b_y[1] << 8) | ((u3_noun) b_y[2] << 16) | ((u3_noun) b_y[3] << 24) | ((u3_noun) b_y[4] << 32) | ((u3_noun) b_y[5] << 40) );
+    }
+    else if ( a_w == 7 ) {
+      return (  ((u3_noun) b_y[0]) |  ((u3_noun) b_y[1] << 8) | ((u3_noun) b_y[2] << 16) | ((u3_noun) b_y[3] << 24) | ((u3_noun) b_y[4] << 32) | ((u3_noun) b_y[5] << 40) | ((u3_noun) b_y[6] << 48)  );
+    }
+
+    else if ( ( 0 == (b_y[7] & u3_noun_metamask_downshift )) ) {
+      return (  ((u3_noun) b_y[0]) |  ((u3_noun) b_y[1] << 8) | ((u3_noun) b_y[2] << 16) | ((u3_noun) b_y[3] << 24) | ((u3_noun) b_y[4] << 32) | ((u3_noun) b_y[5] << 40) | ((u3_noun) b_y[6] << 48) | ((u3_noun) b_y[7] << 56)  );
+    }
+    // possible / intentional fall through here
+    // if data is exactly 8 bytes and top bits of top byte of data conflict with our meta bits
   }
 
   /* Allocate, fill, return.
   */
   {
-    c3_w        len_w = (a_w + 3) >> 2;
-    c3_w*       nov_w = u3a_walloc((len_w + c3_wiseof(u3a_atom)));
+    c3_w        len_w = (a_w + 3) >> 2;  // if we have a_w bytes, how many 32 bit words is that ?
+    c3_w*       nov_w = u3a_walloc((len_w + c3_wiseof(u3a_atom)));  // need space for head struct + data
     u3a_atom* nov_u = (void*)nov_w;
 
-    nov_u->mug_w = 0;
+    nov_u->u.mug_w = 0;
+    nov_u->u.newnoun = 0;
     nov_u->len_w = len_w;
 
-    /* Clear the words.
+    /* Clear the words. (roll our own bzero(), because ... why ?)
     */
     {
       c3_w i_w;
@@ -123,16 +213,17 @@ u3i_bytes(c3_w        a_w,
       }
     }
 
-    /* Fill the bytes.
+    /* Fill the bytes.  (roll our own memcpy(), because ... why ?)
     */
     {
       c3_w i_w;
 
       for ( i_w=0; i_w < a_w; i_w++ ) {
-        nov_u->buf_w[i_w >> 2] |= (b_y[i_w] << ((i_w & 3) * 8));
+        nov_u->buf_w[i_w >> 2] |= ( ((c3_w) b_y[i_w]) << ((i_w & 3) * 8U));
       }
     }
-    return u3a_to_pug(u3a_outa(nov_w));
+    // turn the loom pointer into an indirect noun
+    return u3a_to_indirect(u3a_outa(nov_w));
   }
 }
 
@@ -146,7 +237,12 @@ u3i_mp(mpz_t a_mp)
   /* Efficiency: unnecessary copy.
   */
   {
-    c3_w pyg_w  = mpz_size(a_mp) * ((sizeof(mp_limb_t)) / 4);
+    c3_d pyg_d  =     mpz_size(a_mp) * ((sizeof(mp_limb_t)) / 4);
+    if (pyg_d >  c3_w_MAX){
+      u3m_bail(c3__fail);
+    }
+    c3_w pyg_w  = (c3_w) pyg_d;  // ok; tested size
+    
     c3_w *buz_w = alloca(pyg_w * 4);
     c3_w i_w;
 
@@ -162,22 +258,24 @@ u3i_mp(mpz_t a_mp)
 
 /* u3i_vint():
 **
-**   Create `a + 1`.
+**   return `a + 1`. 
 */
 u3_noun
 u3i_vint(u3_noun a)
 {
   c3_assert(u3_none != a);
 
-  if ( _(u3a_is_cat(a)) ) {
-    c3_w vin_w = (a + 1);
+  if ( u3a_is_direct_b(a) ) {
+    c3_d vin_d = (a + 1);
 
-    if ( a == 0x7fffffff ) {
-      return u3i_words(1, &vin_w);
+    if ( a == u3_noun_max_direct ) {  // if we'd overflow max-direct size, 
+      return u3i_doubles(1, &vin_d);
     }
-    else return vin_w;
+    else {
+      return vin_d;
+    }
   }
-  else if ( _(u3a_is_cell(a)) ) {
+  else if (u3a_is_cell_b(a) ) {
     return u3m_bail(c3__exit);
   }
   else {
@@ -207,15 +305,15 @@ u3i_cell(u3_noun a, u3_noun b)
 #endif
   {
     // c3_w*       nov_w = u3a_walloc(c3_wiseof(u3a_cell));
-    c3_w*       nov_w = u3a_celloc();
+    c3_w*       nov_w = u3a_celloc();  
     u3a_cell* nov_u = (void *)nov_w;
     u3_noun     pro;
 
-    nov_u->mug_w = 0;
+    nov_u->u.mug_w = 0;
     nov_u->hed = a;
     nov_u->tel = b;
 
-    pro = u3a_to_pom(u3a_outa(nov_w));
+    pro = u3a_to_indirect_cell(u3a_outa(nov_w));  
 #if 0
     if ( (0x730e66cc == u3r_mug(pro)) &&
          (c3__tssg == u3h(u3t(u3t(pro)))) ) {
@@ -230,9 +328,9 @@ u3i_cell(u3_noun a, u3_noun b)
     u3t_off(mal_o);
     return pro;
 #else
-    if ( !FOO ) return u3a_to_pom(u3a_outa(nov_w));
+    if ( !FOO ) return u3a_to_indirect_cell(u3a_outa(nov_w));
     else {
-      u3_noun pro = u3a_to_pom(u3a_outa(nov_w));
+      u3_noun pro = u3a_to_indirect_cell(u3a_outa(nov_w));
 
       u3m_p("leaked", pro);
       u3l_log("pro %u, %x\r\n", pro, u3r_mug(pro));
@@ -293,7 +391,7 @@ _edit_cat(u3_noun big, c3_l axe_l, u3_noun som)
 static u3_noun
 _edit(u3_noun big, u3_noun axe, u3_noun som)
 {
-  if ( c3y == u3a_is_cat(axe) ) {
+  if ( c3y == u3a_is_direct_l(axe) ) {
     return _edit_cat(big, (c3_l) axe, som);
   }
   else if ( c3n == u3du(big) ) {
@@ -343,7 +441,7 @@ _mutate_cat(u3_noun big, c3_l axe_l, u3_noun som)
 static void
 _mutate(u3_noun big, u3_noun axe, u3_noun som)
 {
-  if ( c3y == u3a_is_cat(axe) ) {
+  if ( c3y == u3a_is_direct_l(axe) ) {
     _mutate_cat(big, (c3_l) axe, som);
   }
   else if ( c3n == u3du(big) ) {
@@ -375,7 +473,7 @@ _edit_or_mutate_cat(u3_noun big, c3_l axe_l, u3_noun som)
 static u3_noun
 _edit_or_mutate(u3_noun big, u3_noun axe, u3_noun som)
 {
-  if ( c3y == u3a_is_cat(axe) ) {
+  if ( c3y == u3a_is_direct_l(axe) ) {
     return _edit_or_mutate_cat(big, (c3_l) axe, som);
   }
   else if ( c3y == u3a_is_mutable(u3R, big) ) {
@@ -413,7 +511,7 @@ u3i_edit(u3_noun big, u3_noun axe, u3_noun som)
 u3_noun
 u3i_string(const c3_c* a_c)
 {
-  return u3i_bytes(strlen(a_c), (c3_y *)a_c);
+  return u3i_bytes((c3_w) strlen(a_c), (c3_y *)a_c);
 }
 
 /* u3i_tape(): from a C string, to a list of bytes.
@@ -478,7 +576,7 @@ u3i_list(u3_weak one, ...);
     return cut_t ? cut_w : i_w;
   }
 
-NO_SANITIZE_ADDRESS
+__attribute__((no_sanitize_address))
   static u3_noun                            //  transfer
   _molt_apply(u3_noun            som,       //  retain
               c3_w               len_w,
@@ -504,7 +602,7 @@ NO_SANITIZE_ADDRESS
     }
   }
 
-NO_SANITIZE_ADDRESS
+__attribute__((no_sanitize_address))
 u3_noun
 u3i_molt(u3_noun som, ...)
 {

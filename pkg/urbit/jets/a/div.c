@@ -14,7 +14,7 @@
       return u3m_bail(c3__exit);
     }
     else {
-      if ( _(u3a_is_cat(a)) && _(u3a_is_cat(b)) ) {
+      if ( _(u3a_is_direct_l(a)) && _(u3a_is_direct_l(b)) ) {
         return a / b;
       }
       else {

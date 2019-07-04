@@ -2,7 +2,34 @@
 **
 ** This file is in the public domain.
 */
-  /**  Constants.
+
+
+// debuggable_nouns = 1 replaces lots of 'defines' with
+// functions. Slightly slower, because we have to push and pop stack
+// frames, but the upside is that (a) you can invoke functions from
+// the debugger to inspect nouns (e.g. u3a_is_direct_b( ...) 
+// (b) you can single step into the functions
+//
+#define DEBUGGABLE_NOUNS 0
+
+//  In the code we cavalierly convert from 8 byte noun to 4 byte word,
+//  from word to noun, from signed to unsigned, etc.
+//
+//  Often this is valid, because we know that the original variable
+//  will never hold a value that doesn't fit perfectly well into the
+//  new variable. ...but not always.
+//
+//  We have turned on -Wconversion so any implicit cast that can lose
+//  data is an error.  All conversions must be explicit, and SHOULD be
+//  via the API defined in this file (e.g. u3a_noun_to_w(), u3a_noun_to_ws() ... )
+//
+//  TESTED_TYPECASTS = 0 gives quick / dumb explicit casts
+//  TESTED_TYPECASTS = 1 gives runtime-checked casts to make sure values are in legal range
+
+#define TESTED_TYPECASTS 0
+
+
+/**  Constants.
   **/
     /* u3a_bits: number of bits in word-addressed pointer.  29 == 2GB.
     */
@@ -29,9 +56,9 @@
     **  wiseof(u3a_cell) + wiseof(u3a_box) + 1 (trailing siz_w)
     */
 #ifdef U3_MEMORY_DEBUG
-#     define u3a_minimum   8
+#     define u3a_minimum   ( (int) sizeof(u3a_cell) + 2)
 #else
-#     define u3a_minimum   6
+#     define u3a_minimum   ( (int) sizeof(u3a_cell) )
 #endif
 
     /* u3a_fbox_no: number of free lists per size.
@@ -44,17 +71,26 @@
     /* u3a_atom, u3a_cell: logical atom and cell structures.
     */
       typedef struct {
-        c3_w mug_w;
+		union {
+		  c3_w mug_w;
+		  u3_noun newnoun;
+		} u;
       } u3a_noun;
 
       typedef struct {
-        c3_w mug_w;
-        c3_w len_w;
+		union {
+		  c3_w mug_w;
+		  u3_noun newnoun;
+		} u;
+        c3_w len_w;  // len is number of 32 bit words
         c3_w buf_w[0];
       } u3a_atom;
 
       typedef struct {
-        c3_w    mug_w;
+		union {
+		  c3_w    mug_w;
+		  u3_noun newnoun;
+		} u;
         u3_noun hed;
         u3_noun tel;
       } u3a_cell;
@@ -97,11 +133,11 @@
         u3p(struct _u3a_road) kid_p;          //  child road list
         u3p(struct _u3a_road) nex_p;          //  sibling road
 
-        u3p(c3_w) cap_p;                      //  top of transient region
-        u3p(c3_w) hat_p;                      //  top of durable region
-        u3p(c3_w) mat_p;                      //  bottom of transient region
-        u3p(c3_w) rut_p;                      //  bottom of durable region
-        u3p(c3_w) ear_p;                      //  original cap if kid is live
+        u3p(c3_d) cap_p;                      //  top of transient region
+        u3p(c3_d) hat_p;                      //  top of durable region
+        u3p(c3_d) mat_p;                      //  bottom of transient region
+        u3p(c3_d) rut_p;                      //  bottom of durable region
+        u3p(c3_d) ear_p;                      //  original cap if kid is live
 
         c3_w fut_w[32];                       //  futureproof buffer
 
@@ -179,34 +215,276 @@
                                       c3_wiseof(u3a_box)  ) )
     /* Inside a noun.
     */
-#     define u3a_is_cat(som)    (((som) >> 31) ? c3n : c3y)
-#     define u3a_is_dog(som)    (((som) >> 31) ? c3y : c3n)
 
-#     define u3a_is_pug(som)    ((2 == ((som) >> 30)) ? c3y : c3n)
-#     define u3a_is_pom(som)    ((3 == ((som) >> 30)) ? c3y : c3n)
-#     define u3a_to_off(som)    ((som) & 0x3fffffff)
-#     define u3a_to_ptr(som)    (u3a_into(u3a_to_off(som)))
-#     define u3a_to_wtr(som)    ((c3_w *)u3a_to_ptr(som))
-#     define u3a_to_pug(off)    (off | 0x80000000)
-#     define u3a_to_pom(off)    (off | 0xc0000000)
 
-#     define u3a_is_atom(som)    c3o(u3a_is_cat(som), \
-                                         u3a_is_pug(som))
-#     define u3a_is_cell(som)    u3a_is_pom(som)
-#     define u3a_de_twin(dog, dog_w)  ((dog & 0xc0000000) | u3a_outa(dog_w))
+# define     u3_noun_sizeof  8
+# define     u3_noun_num_w  2
+		
+# define     u3_noun_max_direct ((((u3_noun) 1) << 63) - 1)  // largest int we can store in a direct noun
+		
+	//                 63    62   61 ......... 0
+    //                 -------------------------
+    //   direct noun    0     <------- 63 bits of data    -> 
+    //   indirect noun  1     0    <-- 62 bits of pointer ->
+    //   cell           1     1    <-- 62 bits of pointer ->
 
-#     define u3a_h(som) \
+		
+		
+    // level 0 - bit definitions
+
+#     define u3_noun_indirectbit		(((u3_noun) 1) << 63)								// if this bit == 1, then noun is indirect   
+#     define u3_noun_cellbit			(((u3_noun) 1) << 62)								// if indirect bit == 1 && this bit == 1, then noun is cell
+#     define u3_noun_datamask			((((u3_noun) 1) << 62) - 1)							// these bits hold data, not flags (except bit 62 might also)
+#     define u3_noun_metamask			(u3_noun_indirectbit | u3_noun_cellbit)				// these bits hold flags (except bit 62 is tricky)
+#     define u3_noun_metamask_downshift (u3_noun_metamask >> (( u3_noun_sizeof - 1) * 8))	// metamask in top bits of byte 0
+
+#     define u3_noun_bottommask			0x00000000FFFFFFFFU									// get bottom word of a noun
+#     define u3_noun_topmask			0xFFFFFFFF00000000U									// get top word of a noun
+
+#     define u3_noun_bot_w(non)        ((c3_w) (non & u3_noun_bottommask))
+#     define u3_noun_top_w_downshift(non) ((c3_w) ((non & u3_noun_topmask) >> 32))
+
+    // level 1 - direct tests of flag bits, returning booleans { 0 | 1 }
+
+// fix this
+
+#if DEBUGGABLE_NOUNS
+      // functions can be invoked from inside gdb; defines can't be !
+
+      _Bool u3a_is_direct_b(u3_noun som); // direct atom
+      _Bool u3a_is_indirect_b(u3_noun som); // indirect (atom or cell)
+	  _Bool u3a_is_cell_b(u3_noun som);
+      _Bool u3a_is_indirect_atom_b(u3_noun som);
+      u3_noun u3a_to_off(u3_noun som);
+
+#else
+
+#     define u3a_is_direct_b(som)         ( (som & u3_noun_indirectbit) == 0 ) 
+#     define u3a_is_indirect_b(som)       ( (som & u3_noun_indirectbit) != 0 ) 
+#     define u3a_is_cell_b(som)           ( ((som & u3_noun_indirectbit) && (som & u3_noun_cellbit)) != 0)
+#     define u3a_is_indirect_atom_b(som)  ( ((som & u3_noun_indirectbit) && ((som & u3_noun_cellbit) == 0 )) == 1)
+#     define u3a_to_off(som)       ((som) & u3_noun_datamask)
+
+#endif
+
+
+
+
+     // level 1a - bit flipping.  Input: u3_noun. Output: u3_noun
+
+#if DEBUGGABLE_NOUNS
+
+    u3_noun u3a_to_indirect(u3_noun som);
+    u3_noun u3a_to_indirect_cell(u3_noun som);
+
+#else
+
+#     define u3a_to_indirect(som)   (som | u3_noun_indirectbit)
+#     define u3a_to_indirect_cell(som) (som | u3_noun_indirectbit | u3_noun_cellbit)
+
+#endif
+
+
+    // level 2 - test flags, returning loobeans { y | n }
+
+c3_o u3a_is_direct_l(u3_noun som);
+c3_o u3a_is_indirect_l(u3_noun som);
+c3_o u3a_is_indirect_cell_l(u3_noun som);
+c3_o u3a_is_indirect_atom_l(u3_noun som);
+
+     // level 3 - composite
+c3_o u3a_is_atom(u3_noun som);
+c3_o u3a_is_cell(u3_noun  som);
+
+
+
+// convert between types
+
+
+#if TESTED_TYPECASTS
+c3_w  u3a_noun_to_w(u3_noun  non);
+c3_ws u3a_noun_to_ws(u3_noun  non);
+c3_l  u3a_noun_to_l(u3_noun  non);
+c3_s  u3a_noun_to_s(u3_noun  non);
+c3_y  u3a_noun_to_y(u3_noun  non);
+c3_o  u3a_noun_to_o(u3_noun  non);
+
+c3_ws u3a_atom_to_ws(u3_atom ato);
+c3_w  u3a_atom_to_w(u3_atom ato);
+c3_l  u3a_atom_to_l(u3_atom ato);
+c3_s  u3a_atom_to_s(u3_atom ato);
+c3_y  u3a_atom_to_y(u3_atom ato);
+c3_o  u3a_atom_to_o(u3_atom ato);
+
+c3_ds c3_d_to_ds(c3_d d);
+size_t c3_d_to_sizet(c3_d d);
+c3_w  c3_d_to_w(c3_d d);
+c3_ws c3_d_to_ws(c3_d d);
+c3_s  c3_d_to_s(c3_d d);
+c3_y  c3_d_to_y(c3_d d);
+
+size_t c3_ds_to_sizet(c3_ds ds);
+
+c3_w  c3_sizet_to_w(size_t t);
+
+c3_w  c3_ssizet_to_w(ssize_t t);
+c3_ws c3_ssizet_to_ws(ssize_t t);
+
+c3_w  c3_int_to_w(int i);
+
+c3_d  c3_ds_to_d(c3_ds ds);
+c3_w  c3_ds_to_w(c3_ds ds);
+c3_ws c3_ds_to_ws(c3_ds ds);
+c3_l  c3_ds_to_l(c3_ds ds);
+
+c3_ws c3_w_to_ws(c3_w w);
+c3_s  c3_w_to_s(c3_w w);
+c3_y  c3_w_to_y(c3_w w);
+
+ssize_t  c3_ws_to_ssizet(c3_ws ws);
+size_t   c3_ws_to_sizet(c3_ws ws);
+
+c3_ws c3_l_to_ws(c3_l l);
+
+u3_noun c3_ws_to_noun(c3_ws ws);
+c3_w  c3_ws_to_w(c3_ws ws);
+c3_d  c3_ws_to_d(c3_ws ws);
+c3_y  c3_ws_to_y(c3_ws ws);
+
+c3_w  c3_w_plus_d(c3_w w, c3_d d);
+c3_w  c3_w_plus_l(c3_w w, c3_l l);
+
+c3_w  c3_w_plus_ys(c3_w w, c3_ys ys);
+c3_w  c3_w_minus_ys(c3_w w, c3_ys ys);
+
+c3_w c3_wptr_minus_wptr(c3_w * a, c3_w * b);
+
+u3p(c3_d) c3_dptr_plus_ys(u3p(c3_d) ptr, c3_ys ys);
+
+#else
+
+#define  u3a_noun_to_w(  non) ( (c3_w) (non))
+#define u3a_noun_to_ws(  non) ( (c3_ws) (non))
+#define  u3a_noun_to_l(  non) ( (c3_l) (non))
+#define  u3a_noun_to_s(  non) ( (c3_s) (non))
+#define  u3a_noun_to_y(  non) ( (c3_y) (non))
+#define  u3a_noun_to_o(  non) ( (c3_o) (non))
+
+#define u3a_atom_to_ws( ato) ( (c3_ws) (ato))
+#define  u3a_atom_to_w( ato) ( (c3_w) (ato))
+#define  u3a_atom_to_l( ato) ( (c3_l) (ato))
+#define  u3a_atom_to_s( ato) ( (c3_s) (ato))
+#define  u3a_atom_to_y( ato) ( (c3_y) (ato))
+#define  u3a_atom_to_o( ato) ( (c3_o) (ato))
+
+#define c3_d_to_ds( d) ( (c3_ds) (d))
+#define c3_d_to_sizet( d) ( (size_t) (d))
+#define  c3_d_to_w(d) ( (c3_w) (d))
+#define c3_d_to_ws( d) ( (c3_ws) (d))
+#define  c3_d_to_s( d) ( (c3_s) (d))
+#define  c3_d_to_y( d) ( (c3_y) (d))
+
+#define c3_ds_to_sizet( ds) ( (size_t) (ds))
+
+#define  c3_sizet_to_w( t) ( (c3_w) (t))
+#define  c3_ssizet_to_w( t) ( (c3_w) (t))
+#define c3_ssizet_to_ws( t) ( (c3_ws) (t))
+
+#define  c3_int_to_w( i) ( (c3_w) (i))
+
+#define  c3_ds_to_d( ds) ( (c3_d) (ds))
+#define  c3_ds_to_w( ds) ( (c3_w) (ds))
+#define c3_ds_to_ws( ds) ( (c3_ws) (ds))
+#define  c3_ds_to_l( ds) ( (c3_l) (ds))
+
+#define c3_w_to_ws( w) ( (c3_ws) (w))
+#define  c3_w_to_s( w) ( (c3_s) (w))
+#define  c3_w_to_y( w) ( (c3_y) (w))
+
+#define  c3_ws_to_ssizet( ws) ( (ssize_t) (ws))
+#define   c3_ws_to_sizet( ws) ( (size_t) (ws))
+
+#define c3_l_to_ws( l) ( (c3_ws) (l))
+
+#define c3_ws_to_noun( ws) ( (u3_noun) (ws))
+#define  c3_ws_to_w( ws) ( (c3_w) (ws))
+#define  c3_ws_to_d( ws) ( (c3_d) (ws))
+#define  c3_ws_to_y( ws) ( (c3_y) (ws))
+
+#define  c3_w_plus_d( w, d) ( (c3_w) (d))
+#define  c3_w_plus_l( w, l) ( (c3_w) (l))
+
+#define  c3_w_plus_ys( w,  ys)  ( (c3_w) ( (c3_ds) (w) + (c3_ds) (ys)))
+#define  c3_w_minus_ys( w,  ys) ( (c3_w) (  (c3_ds)(w) - (c3_ds)(ys)))
+
+#define  c3_wptr_minus_wptr( a,  b) ((c3_w) ( (c3_ds)(a) - (c3_ds)(b)) / sizeof(c3_w))
+
+
+
+#endif
+
+
+
+#   define u3_Loom      ((c3_w *)(void *)U3_OS_LoomBase)
+
+
+
+#if DEBUGGABLE_NOUNS
+
+    void u3a_examine_noun(u3_noun noun);
+	u3a_atom * atom_to_aatom(u3_atom in_atom);
+	c3_w       atom_len(u3_atom in_atom);
+	c3_w *     atom_dat(u3_atom in_atom);
+
+	void * u3a_into(u3_noun x); // turn an indirect noun into a loom pointer
+
+    void * u3a_to_ptr(u3_noun som);
+
+    u3a_atom * u3a_to_atomptr(u3_noun som);
+
+	u3a_cell * u3a_to_cell_ptr(u3_noun som);
+
+    u3_noun u3a_h(u3_noun som);
+
+    u3_noun u3a_t(u3_noun som);
+
+    u3_post  u3a_outa_wp(c3_w* p);
+
+    c3_w * u3a_into_wp(u3_noun x);
+
+#else
+
+	#     define  u3a_into(x) ((void *)(u3_Loom + (x)))
+					// input is any pointer
+					// output is a c3_w which is the offset from loom base
+
+
+	#     define u3a_to_ptr(som)    (u3a_into(u3a_to_off(som)))
+
+
+    #     define u3a_h(som) \
         ( _(u3a_is_cell(som)) \
            ? ( ((u3a_cell *)u3a_to_ptr(som))->hed )\
            : u3m_bail(c3__exit) )
 
-#     define u3a_t(som) \
+
+    #     define u3a_t(som) \
         ( _(u3a_is_cell(som)) \
            ? ( ((u3a_cell *)u3a_to_ptr(som))->tel )\
            : u3m_bail(c3__exit) )
 
-#     define  u3a_into(x) ((void *)(u3_Loom + (x)))
-#     define  u3a_outa(p) (((c3_w*)(void*)(p)) - u3_Loom)
+    #     define  u3a_outa_wp(p) ((c3_w) (((c3_w*)(void*)(p)) - (c3_w *) u3_Loom))
+	  
+#endif
+// given a pointer to data in the Loom, calculate the offset from the base of the loom
+#     define  u3a_outa(p) ((c3_w) (((c3_w*)(void*)(p)) - (c3_w *) u3_Loom))
+
+
+#     define u3a_de_twin(dog, dog_w)  (dog & (u3_noun_indirectbit | u3_noun_cellbit) | u3a_outa(dog_w))
+
+
+// head, tail
+
 
 #     define  u3a_is_north(r)  __(r->cap_p > r->hat_p)
 #     define  u3a_is_south(r)  !u3a_is_north(r)
@@ -240,14 +518,14 @@
                        !(u3a_south_is_junior(r, dog)))
 
 #     define  u3a_is_junior(r, som) \
-                ( _(u3a_is_cat(som)) \
+                ( _(u3a_is_direct_l(som)) \
                       ?  c3n \
                       :  _(u3a_is_north(r)) \
                          ?  u3a_north_is_junior(r, som) \
                          :  u3a_south_is_junior(r, som) )
 
 #     define  u3a_is_senior(r, som) \
-                ( _(u3a_is_cat(som)) \
+                ( _(u3a_is_direct_l(som)) \
                       ?  c3y \
                       :  _(u3a_is_north(r)) \
                          ?  u3a_north_is_senior(r, som) \
@@ -276,7 +554,6 @@
       c3_global c3_w u3_Code;
 #endif
 
-#   define u3_Loom      ((c3_w *)(void *)U3_OS_LoomBase)
 
   /**  Functions.
   **/
@@ -421,13 +698,13 @@
 
         /* u3a_lush(): leak push.
         */
-          c3_w
-          u3a_lush(c3_w lab_w);
+          c3_d
+          u3a_lush(c3_d lab_d);
 
         /* u3a_lop(): leak pop.
         */
           void
-          u3a_lop(c3_w lab_w);
+          u3a_lop(c3_d lab_d);
 
         /* u3a_print_memory(): print memory amount.
         */
@@ -454,7 +731,7 @@
         /* u3a_slaq(): u3a_slab() with a defined blocksize.
         */
           c3_w*
-          u3a_slaq(c3_g met_g, c3_w len_w);
+          u3a_slaq(c3_g met_g, c3_d len_w);
 
         /* u3a_malt(): measure and finish a proto-atom.
         */

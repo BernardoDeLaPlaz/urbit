@@ -81,7 +81,7 @@ static c3_c*
 _foil_path(u3_dire*    dir_u,
            const c3_c* nam_c)
 {
-  c3_w  len_w = strlen(dir_u->pax_c);
+  c3_w  len_w = c3_sizet_to_w(strlen(dir_u->pax_c));
   c3_c* pax_c;
 
   pax_c = c3_malloc(1 + len_w + 1 + strlen(nam_c));
@@ -162,7 +162,7 @@ u3_foil_folder(const c3_c* pax_c)
       _foil_fail("open directory", err_i);
       return 0;
     }
-    dir_u->fil_u = ruq_u.result;
+    dir_u->fil_u = c3_ssizet_to_ws(ruq_u.result);
 
     uv_fs_req_cleanup(&ruq_u);
   }
@@ -187,7 +187,7 @@ u3_foil_folder(const c3_c* pax_c)
     u3_foil*                     fol_u;
 
     fol_u = c3_malloc(sizeof(*fol_u));
-    fol_u->fil_u = ruq_u->result;
+    fol_u->fil_u = c3_ssizet_to_ws(ruq_u->result);
     fol_u->dir_u = req_u->dir_u;
     fol_u->nam_c = req_u->nam_c;
     fol_u->end_d = 0;
@@ -268,7 +268,7 @@ u3_foil_absorb(u3_dire* dir_u,              //  directory
 
     fol_u = c3_malloc(sizeof(*fol_u));
     fol_u->dir_u = dir_u;
-    fol_u->fil_u = ruq_u.result;
+    fol_u->fil_u = c3_ssizet_to_ws(ruq_u.result);
     fol_u->nam_c = c3_malloc(1 + strlen(nam_c));
     strcpy(fol_u->nam_c, nam_c);
 
@@ -416,7 +416,7 @@ u3_foil_append(void   (*fun_f)(void*),      //  context pointer
 
     /*  XX: assumes "little-endian won", 32-bit frame length.
     */
-    top_w = u3r_mug_words((c3_w *)(void *) buf_d, (2 * len_d));
+    top_w = u3r_mug_words((c3_w *)(void *) buf_d, c3_d_to_w(2 * len_d));
     bot_w = (req_u->fol_u->end_d & 0xffffffff);
     bot_w = u3r_mug_words(&bot_w, 1);
 
@@ -429,7 +429,7 @@ u3_foil_append(void   (*fun_f)(void*),      //  context pointer
   {
     uv_buf_t buf_u[2];
 
-    buf_u[0] = uv_buf_init((void *)buf_d, (len_d * 8));
+    buf_u[0] = uv_buf_init((void *)buf_d, c3_d_to_w(len_d * 8));
     buf_u[1] = uv_buf_init((void *)req_u->fam_d, 16);
 
     if ( 0 != (err_i = uv_fs_write(u3L,
@@ -437,7 +437,7 @@ u3_foil_append(void   (*fun_f)(void*),      //  context pointer
                                    fol_u->fil_u,
                                    buf_u,
                                    2,
-                                   (8ULL * pos_d),
+                                   c3_d_to_ds(8ULL * pos_d),
                                    _foil_append_cb_1)) )
     {
       _foil_fail("uv_fs_write", err_i);
@@ -471,7 +471,7 @@ u3_foil_reveal(u3_foil* fol_u,              //  file from
                                  &ruq_u,
                                  fol_u->fil_u,
                                  &buf_u, 1,
-                                 (8ULL * (pos_d - 2ULL)),
+                                 c3_d_to_ds(8ULL * (pos_d - 2ULL)),
                                  0)) )
     {
       _foil_fail("uv_fs_read", err_i);
@@ -492,7 +492,7 @@ u3_foil_reveal(u3_foil* fol_u,              //  file from
       return 0;
     }
 
-    top_w = fam_d[1] >> 32ULL;
+    top_w = c3_d_to_w(fam_d[1] >> 32ULL);
     mug_l = top_w;
 
     bot_w = fam_d[1] & 0xffffffff;
@@ -507,14 +507,14 @@ u3_foil_reveal(u3_foil* fol_u,              //  file from
   */
   {
     c3_d*    buf_d = c3_malloc(8 * *len_d);
-    uv_buf_t buf_u = uv_buf_init((void *)buf_d, 8 * *len_d);
+    uv_buf_t buf_u = uv_buf_init((void *)buf_d, c3_d_to_w(8 * *len_d) );
     c3_l     gum_l;
 
     if ( 0 > (err_i = uv_fs_read(u3L,
                                  &ruq_u,
                                  fol_u->fil_u,
                                  &buf_u, 1,
-                                 (8ULL * (pos_d - (*len_d + 2ULL))),
+                                 c3_d_to_ds(8ULL * (pos_d - (*len_d + 2ULL))),
                                  0) ) )
     {
       _foil_fail("uv_fs_read", err_i);
@@ -522,7 +522,8 @@ u3_foil_reveal(u3_foil* fol_u,              //  file from
     }
     uv_fs_req_cleanup(&ruq_u);
 
-    gum_l = u3r_mug_words((c3_w *)(void *) buf_d, (2 * *len_d));
+    gum_l = u3r_mug_words((c3_w *)(void *) buf_d,
+                          c3_d_to_w(2 * *len_d));
     if ( mug_l != gum_l ) {
       _foil_fail("corrupt frame c", 0);
       return 0;

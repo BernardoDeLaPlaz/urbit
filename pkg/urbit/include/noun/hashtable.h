@@ -6,14 +6,25 @@
   **/
     /**  Straightforward implementation of the classic Bagwell
     ***  HAMT (hash array mapped trie), using a mug hash.
+	***
+	***  read more here
+	***      https://idea.popcount.org/2012-07-25-introduction-to-hamt/
     ***
-    ***  Because a mug is 31 bits, the root table has 64 slots.
-    ***  The 31 bits of a mug are divided into the first lookup,
-    ***  which is 6 bits (corresponding to the 64 entries in the
-    ***  root table), followed by 5 more branchings of 5 bits each,
-    ***  corresponding to the 32-slot nodes for everything under
-    ***  the root node.
-    ***
+	***  Store a noun in a tree.
+	***
+	***  To store do so: take the mug(noun), then take the first 6 bits as an index into  
+    ***  an array (2^6 = 64 slots).  If slot is empty, store noun there.  If slot is full:
+	***       * create a new node
+	***       * move old value into that node
+	***       * put new value in that node too
+	***
+	***  Every layer of the tree after the top uses subsequent 5 bits of key (2^5 = 32 slots)
+	***
+    ***  Tree is a max of 5 layers deep (32 bit mug = 6 bits + 5 more layers of 5 bits.)
+	***
+	***  We do NOT allocate the array of 32 slots in each node; we use a compression algorithm 
+	***  such that if there are two entries at index 15 and 25, we use an array of just 2 elements.
+	***
     ***  We store an extra "freshly warm" bit for a simple
     ***  clock-algorithm reclamation policy, not yet implemented.
     ***  Search "clock algorithm" to figure it out.
@@ -24,18 +35,18 @@
       **   to a u3h_node, or a u3h_buck at the bottom.  Matches the u3_noun
       **   format - coordinate with allocate.h.  The top two bits are:
       **
-      **     00 - empty (in the root table only)
-      **     01 - table
-      **     02 - entry, stale
-      **     03 - entry, fresh
+      **     0 / 00 - empty (in the root table only)
+      **     1 / 01 - table
+      **     2 / 10 - entry, stale  <--- unused
+      **     3 / 11 - entry, fresh
       */
-        typedef c3_w u3h_slot;
+        typedef c3_d u3h_slot;
 
       /* u3h_node: map node.
       */
         typedef struct {
           c3_w     map_w;
-          u3h_slot sot_w[0];
+          u3h_slot sot_u[0];
         } u3h_node;
 
       /* u3h_root: hash root table
@@ -48,14 +59,14 @@
             c3_w  inx_w;      // index into current hash bucket iff buc_o
             c3_o  buc_o;      // yes if in middle of hash bucket
           } arm_u;            // clock arm
-          u3h_slot sot_w[64]; // slots
+          u3h_slot sot_u[64]; // slots
         } u3h_root;
 
       /* u3h_buck: bottom bucket.
       */
         typedef struct {
           c3_w    len_w;
-          u3h_slot sot_w[0];
+          u3h_slot sot_u[0];
         } u3h_buck;
 
     /**  HAMT macros.
@@ -73,19 +84,42 @@
       ** u3h_noun_be_warm(): warm mutant
       ** u3h_noun_be_cold(): cold mutant
       */
-#     define  u3h_slot_is_null(sot)  ((0 == ((sot) >> 30)) ? c3y : c3n)
-#     define  u3h_slot_is_node(sot)  ((1 == ((sot) >> 30)) ? c3y : c3n)
-#     define  u3h_slot_is_noun(sot)  ((1 == ((sot) >> 31)) ? c3y : c3n)
-#     define  u3h_slot_is_warm(sot)  (((sot) & 0x40000000) ? c3y : c3n)
-#     define  u3h_slot_to_node(sot)  (u3a_into((sot) & 0x3fffffff))
-#     define  u3h_node_to_slot(ptr)  (u3a_outa(ptr) | 0x40000000)
-#     define  u3h_noun_be_warm(sot)  ((sot) | 0x40000000)
-#     define  u3h_noun_be_cold(sot)  ((sot) & ~0x40000000)
-#     define  u3h_slot_to_noun(sot)  (0x40000000 | (sot))
-#     define  u3h_noun_to_slot(som)  (u3h_noun_be_warm(som))
+
+//    63     62    ........
+//    1      ?       noun  
+//    0      0       null  } pair
+//    0      1       node  }
+//
+//    n/a    1       warm  } pair
+//    n/a    0       cold  } 
+
+
+#     define u3_hash_topbit   (((u3h_slot) 1) << 63) 
+#     define u3_hash_nextbit  (((u3h_slot) 1) << 62)	
+#     define u3_hash_metamask (u3_hash_topbit | u3_hash_nextbit) // these bits hold flags, not data
+#     define u3_hash_datamask ((((u3h_slot) 1) << 62) - 1) 	     // these bits hold data, not flags
+#     define u3_hash_meta_downshift(sot) (((sot) & (u3_hash_topbit | u3_hash_nextbit)) >> 62)
+
+
+
+#     define  u3h_noun_be_warm(sot)  ((sot) | u3_hash_nextbit)                        // set warm bit
+#     define  u3h_noun_be_cold(sot)  ((sot) & ~u3_hash_nextbit)                       // clear warm bit
+
+void * u3h_slot_to_node(u3h_slot hand);
+u3h_slot u3h_node_to_slot(void * ptr);
+void * u3h_slot_to_node(u3h_slot hand);
+u3h_slot u3h_noun_to_slot(u3_noun som);
+
+c3_t u3h_slot_is_node(u3h_slot sot);
+c3_t u3h_slot_is_noun(u3h_slot sot);
+c3_t u3h_slot_is_null(u3h_slot sot);
+c3_t  u3h_slot_is_warm(u3h_slot sot);
+
+
+
 
     /**  Functions.
-    ***
+    ***@f
     ***  Needs: delete and merge functions; clock reclamation function.
     **/
       /* u3h_new_cache(): create hashtable with bounded size.
@@ -153,3 +187,5 @@
       */
         void
         u3h_walk(u3p(u3h_root) har_p, void (*fun_f)(u3_noun));
+ 
+  

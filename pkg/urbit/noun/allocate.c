@@ -3,13 +3,645 @@
 */
 #include "all.h"
 
+
+#if DEBUGGABLE_NOUNS
+
+_Bool u3a_is_direct_b(u3_noun som)
+{
+  return ( (som & u3_noun_indirectbit) == 0 );
+}
+
+_Bool u3a_is_indirect_b(u3_noun som)
+{
+  return ( (som & u3_noun_indirectbit) != 0 );
+} 
+
+_Bool u3a_is_cell_b(u3_noun som)
+{
+  c3_d  a = (som & u3_noun_indirectbit);
+  c3_d  b = (som & u3_noun_cellbit);
+  c3_d  c = (a && b ) != 0;
+
+  return(c);
+}
+
+_Bool u3a_is_indirect_atom_b(u3_noun som)
+{
+  return ( ((som & u3_noun_indirectbit) && ((som & u3_noun_cellbit) == 0 )) == 1);
+}
+
+u3_noun u3a_to_off(u3_noun som)
+{
+  u3_noun ret = som & u3_noun_datamask;
+  return(ret);
+}
+
+u3_noun u3a_to_indirect(u3_noun som)
+{
+  return (som | u3_noun_indirectbit);
+}	 
+
+u3_noun u3a_to_indirect_cell(u3_noun som)
+{
+  return (som | u3_noun_indirectbit | u3_noun_cellbit);
+}	 
+
+
+
+
+// debugging tools
+
+u3a_atom * atom_to_aatom(u3_atom in_atom)
+{
+  if (u3a_is_direct_b(in_atom)){
+    return(NULL);
+  } else {
+    return(u3a_to_ptr(in_atom));
+  }
+}
+
+c3_w atom_len(u3_atom in_atom)
+{
+  if (u3a_is_direct_b(in_atom)){
+    return(2);
+  } else {
+    return(u3a_to_atomptr(in_atom)->len_w);
+  }
+}
+
+c3_w * atom_dat(u3_atom in_atom)
+{
+  if (u3a_is_direct_b(in_atom)){
+    return(NULL); // we need apply u3a_to_off() to remove the metadata, but then how do we get a ptr to it?
+  } else {
+    return(u3a_to_atomptr(in_atom)->buf_w);
+  }
+}
+
+void u3a_examine_noun(u3_noun noun)
+{
+  printf("noun: %ld\n", noun);
+  
+  if(u3a_is_cell_b(noun)){
+    printf(" * cell\n");
+  } else if (u3a_is_direct_b(noun)) {
+    printf(" * direct atom\n");
+    printf("    value = 0x%lx\n", u3_noun_datamask & noun);
+  } else {
+    printf(" * indirect atom\n");
+
+    u3a_atom * atom_ptr =    atom_to_aatom(noun);
+    printf("    atom ptr = %p\n",  atom_ptr );
+    printf("    atom len = %x\n",  atom_ptr->len_w);
+    printf("    atom buf = %p\n",  atom_ptr->buf_w);
+
+    int ii;
+    printf("    ");
+    for (ii=0 ; ii < atom_ptr->len_w; ii++){
+      printf("0x%x 0x%x ", (atom_ptr->buf_w[ii] >> 16) & 0xffff, atom_ptr->buf_w[ii] & 0x0000ffff );
+    }
+    printf("\n");
+  } 
+
+}
+
+
+#endif
+
+// safe-casting tools (from 64 bit noun project)
+
+#if TESTED_TYPECASTS
+c3_w u3a_noun_to_w(u3_noun  non)
+{
+  if (!u3a_is_direct_b(non)){
+    u3m_bail(c3__exit);
+  }
+  return (u3a_atom_to_w((u3_atom) non));
+}
+
+c3_l u3a_noun_to_l(u3_noun  non)
+{
+  if (!u3a_is_direct_b(non)){
+    u3m_bail(c3__exit);
+  }
+  return (u3a_atom_to_l((u3_atom) non));
+}
+
+c3_ws u3a_noun_to_ws(u3_noun  non)
+{
+  if (!u3a_is_direct_b(non)){
+    u3m_bail(c3__exit);
+  }
+  return (u3a_atom_to_ws((u3_atom) non));
+}
+
+
+c3_s u3a_noun_to_s(u3_noun  non)
+{
+  if (!u3a_is_direct_b(non)){
+    u3m_bail(c3__exit);
+  }
+  return (u3a_atom_to_s((u3_atom) non));
+}
+
+c3_y u3a_noun_to_y(u3_noun  non)
+{
+  if (!u3a_is_direct_b(non)){
+    u3m_bail(c3__exit);
+  }
+  return (u3a_atom_to_y((u3_atom) non));
+}
+c3_o  u3a_noun_to_o(u3_noun  non)
+{
+  if (!u3a_is_direct_b(non)){
+    u3m_bail(c3__exit);
+  }
+  return (u3a_atom_to_o((u3_atom) non));
+
+}
+
+
+c3_w u3a_atom_to_w(u3_atom  ato)
+{
+  if (ato >  c3_w_MAX){
+    u3m_bail(c3__exit);
+  }
+  c3_w ret_w = (c3_w) ato;
+  return(ret_w);
+  
+}
+
+c3_ws u3a_atom_to_ws(u3_atom  ato)
+{
+  if (ato >  c3_ws_MAX){
+    u3m_bail(c3__exit);
+  }
+  c3_ws ret_ws = (c3_ws) ato;
+  return(ret_ws);
+  
+}
+
+c3_l u3a_atom_to_l(u3_atom  ato)
+{
+  if (ato >  c3_l_MAX){
+    u3m_bail(c3__exit);
+  }
+  c3_l ret_l = (c3_l) ato;
+  return(ret_l);
+  
+}
+
+c3_s u3a_atom_to_s(u3_atom  ato)
+{
+  if (ato >  c3_s_MAX){
+    u3m_bail(c3__exit);
+  }
+  c3_s ret_s = (c3_s) ato;
+  return(ret_s);
+  
+}
+
+c3_y u3a_atom_to_y(u3_atom  ato)
+{
+  if (ato >  c3_y_MAX){
+    u3m_bail(c3__exit);
+  }
+  c3_y ret_y = (c3_y) ato;
+  return(ret_y);
+  
+}
+
+c3_o  u3a_atom_to_o(u3_atom ato)
+{
+  if (ato >  c3_o_MAX){
+    u3m_bail(c3__exit);
+  }
+  c3_o ret_o = (c3_o) ato;
+  return(ret_o);
+  
+}
+
+c3_d c3_ds_to_d(c3_ds in_ds)
+{
+  if (in_ds <  0){
+    u3m_bail(c3__exit);
+  }
+  c3_d ret_d = (c3_d) in_ds;
+  return(ret_d);
+  
+}
+
+c3_ws  c3_ds_to_ws(c3_ds in_ds)
+{
+  if (in_ds <  0 || in_ds > c3_ws_MAX){
+    u3m_bail(c3__exit);
+  }
+  c3_ws ret_ws = (c3_ws) in_ds;
+  return(ret_ws);
+  
+}
+
+c3_w  c3_ds_to_w(c3_ds in_ds)
+{
+  if (in_ds <  0 || in_ds > c3_w_MAX){
+    u3m_bail(c3__exit);
+  }
+  c3_w ret_w = (c3_w) in_ds;
+  return(ret_w);
+  
+}
+
+c3_l  c3_ds_to_l(c3_ds in_ds)
+{
+  if (in_ds <  0 || in_ds > c3_l_MAX){
+    u3m_bail(c3__exit);
+  }
+  c3_l ret_l = (c3_l) in_ds;
+  return(ret_l);
+  
+}
+
+c3_ds c3_d_to_ds(c3_d in_d)
+{
+  if (in_d > c3_ds_MAX){
+    u3m_bail(c3__exit);
+  }
+  c3_ds ret_ds = (c3_ds) in_d;
+  return(ret_ds);
+}
+
+size_t c3_d_to_sizet(c3_d d)
+{
+  size_t ret_st = (size_t) d;
+  return(ret_st);
+}
+
+c3_w c3_d_to_w(c3_d in_d)
+{
+  if (in_d >  c3_w_MAX){
+    u3m_bail(c3__exit);
+  }
+  c3_w ret_w = (c3_w) in_d;
+  return(ret_w);
+  
+}
+
+c3_ws c3_d_to_ws(c3_d in_d)
+{
+  if (in_d >  c3_ws_MAX){
+    u3m_bail(c3__exit);
+  }
+  c3_ws ret_ws = (c3_ws) in_d;
+  return(ret_ws);
+  
+}
+
+c3_s c3_d_to_s(c3_d in_d)
+{
+  if (in_d >  c3_s_MAX){
+    u3m_bail(c3__exit);
+  }
+  c3_s ret_s = (c3_s) in_d;
+  return(ret_s);
+  
+}
+
+c3_y c3_d_to_y(c3_d in_d)
+{
+  if (in_d >  c3_y_MAX){
+    u3m_bail(c3__exit);
+  }
+  c3_y ret_y = (c3_y) in_d;
+  return(ret_y);
+  
+}
+
+size_t c3_ds_to_sizet(c3_ds ds)
+{
+  if (ds < 0){
+    u3m_bail(c3__exit);
+  }
+  size_t ret_st = (size_t) ds;
+  return(ret_st);
+}
+
+
+c3_w c3_ssizet_to_w(ssize_t t)
+{
+  if ((t >  c3_w_MAX) || (t <0)){
+    u3m_bail(c3__exit);
+  }
+  c3_w ret_w = (c3_w) t;
+  return(ret_w);
+  
+}
+
+c3_w c3_sizet_to_w(size_t t)
+{
+  if (t >  c3_w_MAX){
+    u3m_bail(c3__exit);
+  }
+  c3_w ret_w = (c3_w) t;
+  return(ret_w);
+  
+}
+
+c3_ws c3_ssizet_to_ws(ssize_t t)
+{
+  if (t >  c3_w_MAX){  // also check negative side
+    u3m_bail(c3__exit);
+  }
+  c3_ws ret_ws = (c3_ws) t;
+  return(ret_ws);
+  
+}
+
+
+c3_w c3_int_to_w(int  i)
+{
+  if ((i >  c3_w_MAX) || (i<0)){
+    u3m_bail(c3__exit);
+  }
+  c3_w ret_w = (c3_w) i;
+  return(ret_w);
+  
+}
+
+
+c3_ws c3_w_to_ws(c3_w in_w)
+{
+  if (in_w >  c3_ws_MAX){
+    u3m_bail(c3__exit);
+  }
+  c3_ws ret_ws = (c3_y) in_w;
+  return(ret_ws);
+  
+}
+
+c3_s  c3_w_to_s(c3_w w)
+{
+  if (w >  c3_s_MAX){
+    u3m_bail(c3__exit);
+  }
+  c3_s ret_s = (c3_s) w;
+  return(ret_s);
+  
+}
+
+c3_ws c3_l_to_ws(c3_w in_l)
+{
+  if (in_l >  c3_ws_MAX){
+    u3m_bail(c3__exit);
+  }
+  c3_ws ret_ws = (c3_y) in_l;
+  return(ret_ws);
+  
+}
+
+c3_y c3_w_to_y(c3_w in_w)
+{
+  if (in_w >  c3_y_MAX){
+    u3m_bail(c3__exit);
+  }
+  c3_y ret_y = (c3_y) in_w;
+  return(ret_y);
+  
+}
+
+u3_noun c3_ws_to_noun(c3_ws ws)
+{
+  return((u3_noun)ws);
+}
+
+ssize_t  c3_ws_to_ssizet(c3_ws ws)
+{
+  // not checking for max, bc we don't know what max size_t is
+  if (ws < 0 ){
+    u3m_bail(c3__exit);
+  }
+  ssize_t ret_sst = (ssize_t) ws;
+  return(ret_sst);
+  
+}
+
+size_t  c3_ws_to_sizet(c3_ws ws)
+{
+  // bogus ; should do real checking here
+  size_t ret_st = (size_t) ws;
+  return(ret_st);
+  
+}
+
+c3_w c3_ws_to_w(c3_ws in_ws)
+{
+  if ((in_ws >  c3_w_MAX) || (in_ws <  0)){
+    u3m_bail(c3__exit);
+  }
+  c3_w ret_w = (c3_w) in_ws;
+  return(ret_w);
+  
+}
+
+c3_d  c3_ws_to_d(c3_ws ws)
+{
+  if (ws <  0){
+    u3m_bail(c3__exit);
+  }
+  c3_d ret_d = (c3_d) ws;
+  return(ret_d);
+  
+}
+c3_y c3_ws_to_y(c3_ws in_ws)
+{
+  if ((in_ws >  c3_y_MAX) || (in_ws <  0)){
+    u3m_bail(c3__exit);
+  }
+  c3_y ret_y = (c3_y) in_ws;
+  return(ret_y);
+  
+}
+
+c3_w  c3_w_plus_d(c3_w w, c3_d d)
+{
+  c3_d sum_d = ( (c3_d) w + d);
+  if (sum_d > c3_w_MAX){
+    u3m_bail(c3__fail);
+  }
+  c3_w new_w = (c3_w) sum_d;
+  return(new_w);
+}
+
+c3_w c3_w_plus_l(c3_w w, c3_l l)
+{
+  c3_d d = ( (c3_d) w + (c3_d) l);
+  if (d > c3_l_MAX){
+    u3m_bail(c3__fail);
+  }
+  c3_w new_w = (c3_w) d;
+  return(new_w);
+}
+
+c3_w c3_w_plus_ys(c3_w w, c3_ys ys)
+{
+  c3_ds ds = ( (c3_ds) w + (c3_ds) ys);
+  if (ds > c3_w_MAX){
+    u3m_bail(c3__fail);
+  }
+  c3_w new_w = (c3_w) ds;
+  return(new_w);
+}
+
+c3_w c3_w_minus_ys(c3_w w, c3_ys ys)
+{
+  c3_ds ds = ( (c3_ds) w - (c3_ds) ys);
+  if ((ds > c3_w_MAX) || (ds < 0)){
+    u3m_bail(c3__fail);
+  }
+  c3_w new_w = (c3_w) ds;
+  return(new_w);
+}
+
+c3_w c3_wptr_minus_wptr(c3_w * a, c3_w * b)
+{
+  c3_ds c = ( (c3_ds) a - (c3_ds) b);
+  if ((c > c3_w_MAX) || (c < 0)){
+    u3m_bail(c3__fail);
+  }
+  c3_w c_w = (c3_w) c;  // bytes between pointers
+  c_w = c_w / sizeof(c3_w); // c3_ws between pointers
+  return(c_w);
+}
+
+#endif // TESTED_TYPECASTS
+
+
+#if DEBUGGABLE_NOUNS
+
+u3a_cell * u3a_to_cell_ptr(u3_noun som)
+{
+  u3_noun off = u3a_to_off(som);  // turn off high end bits
+  void * ret_w = u3a_into_wp(off); // Loom offset
+  u3a_cell * ret = (u3a_cell *) ret_w;
+  return (ret);
+}
+
+
+// cells: head / tail
+
+u3_noun u3a_h(u3_noun som)
+{
+  if (u3a_is_cell_b(som)) {
+    u3_noun ret =   ((u3a_cell *) u3a_to_ptr(som)) ->hed ;
+    return(ret);
+  } else {
+    u3m_bail(c3__exit);
+  }
+}
+
+u3_noun u3a_t(u3_noun som) 
+{
+  if (u3a_is_cell_b(som)) {
+    u3a_cell * cellptr = u3a_to_cell_ptr(som);
+    u3_noun ret = cellptr   ->tel ;
+    return(ret);
+  } else {
+    u3m_bail(c3__exit);
+  }
+}
+
+// noun bit inspection
+//
+
+
+    // level 1 - direct tests of flag bits, returning booleans { 0 | 1 }
+
+
+
+// turn an indirect noun into a loom pointer
+void * u3a_into(u3_noun x)
+{
+  return ((void *)(u3_Loom + x));
+}
+
+void * u3a_to_ptr(u3_noun som)
+{
+  return(u3a_into(u3a_to_off(som)));
+}
+
+u3a_atom * u3a_to_atomptr(u3_noun som)
+{
+  return ((u3a_atom *)(u3a_to_ptr(som)));
+}
+
+// given a pointer into the Loom, return the offset from the base of the loom  
+u3_post  u3a_outa_wp(c3_w* p)
+{
+  c3_w* base = (c3_w*) u3_Loom;
+  long int diff_i = p - base; // signed
+  c3_d diff_d = c3_ds_to_d(diff_i); // unsigned
+  u3_post diff = (u3_post) diff_d;
+  return (diff);
+}
+
+// turn an indirect noun into a loom pointer
+c3_w * u3a_into_wp(u3_noun x)
+{
+  return ((c3_w *)(u3_Loom + x));
+}
+
+
+
+
+
+
+#endif
+
+    // level 2 - test flags, returning loobeans { y | n }
+
+c3_o u3a_is_direct_l(u3_noun som)
+{
+  return (u3a_is_direct_b(som) ? c3y : c3n);
+}
+
+c3_o u3a_is_indirect_l(u3_noun som)
+{
+  return(u3a_is_indirect_b(som) ? c3y : c3n);
+}
+
+c3_o u3a_is_indirect_cell_l(u3_noun som)
+{
+  return (u3a_is_cell_b(som) ? c3y : c3n);
+}
+c3_o u3a_is_indirect_atom_l(u3_noun som)
+{
+  return (u3a_is_indirect_atom_b(som) ? c3y : c3n);
+}
+
+    // level 3 - as above, but strange Curtis aliases
+
+
+
+     // level 4 - composite
+c3_o u3a_is_atom(u3_noun som)
+{
+  return c3o(u3a_is_direct_l(som), u3a_is_indirect_atom_l(som));
+}
+
+c3_o u3a_is_cell(u3_noun  som)
+{
+  return (u3a_is_indirect_cell_l(som));
+}
+
+
+
+
 /* _box_count(): adjust memory count.
 */
 #ifdef  U3_CPU_DEBUG
 static void
 _box_count(c3_ws siz_ws)
 {
-  u3R->all.fre_w += siz_ws;
+  u3R->all.fre_w = (c3_w) ((c3_ds) u3R->all.fre_w + (c3_ds) siz_ws);
   {
     c3_w end_w = _(u3a_is_north(u3R))
                   ? (u3R->hat_p - u3R->rut_p)
@@ -92,7 +724,11 @@ _box_attach(u3a_box* box_u)
   }
 #endif
 
-  _box_count(box_u->siz_w);
+  if (box_u->siz_w > c3_ws_MAX) {
+    u3m_bail(c3__exit);
+  }
+  c3_ws siz_ws = (c3_ws) box_u->siz_w; // ok; checked size 
+  _box_count(siz_ws);
   {
     c3_w           sel_w = _box_slot(box_u->siz_w);
     u3p(u3a_fbox)  fre_p = u3of(u3a_fbox, box_u);
@@ -117,7 +753,11 @@ _box_detach(u3a_box* box_u)
   u3p(u3a_fbox) pre_p = u3to(u3a_fbox, fre_p)->pre_p;
   u3p(u3a_fbox) nex_p = u3to(u3a_fbox, fre_p)->nex_p;
 
-  _box_count(-(box_u->siz_w));
+  if (box_u->siz_w > c3_ws_MAX) {
+    u3m_bail(c3__exit);
+  }
+  c3_ws siz_ws = (c3_ws) box_u->siz_w; // ok; checked size 
+  _box_count(-(siz_ws));
 
   if ( nex_p ) {
     c3_assert(u3to(u3a_fbox, nex_p)->pre_p == fre_p);
@@ -231,7 +871,7 @@ _me_align_pad(u3_post pos_p, c3_w ald_w, c3_w alp_w)
   c3_p off_p = (pos_p + adj_w);
   c3_p orp_p = off_p &~ (ald_w - 1);
   c3_p fin_p = orp_p + alp_w;
-  c3_w pad_w = (fin_p - pos_p);
+  c3_w pad_w = (c3_w) (fin_p - pos_p);  // pointer math
 
   return pad_w;
 }
@@ -245,7 +885,7 @@ _me_align_dap(u3_post pos_p, c3_w ald_w, c3_w alp_w)
   c3_p off_p = (pos_p - adj_w);
   c3_p orp_p = (off_p &~ (ald_w - 1));
   c3_p fin_p = orp_p + alp_w;
-  c3_w pad_w = (pos_p - fin_p);
+  c3_w pad_w = (c3_w) (pos_p - fin_p); // pointer math
 
   return pad_w;
 }
@@ -409,7 +1049,6 @@ _ca_willoc(c3_w len_w, c3_w ald_w, c3_w alp_w)
   // u3l_log("walloc %d: *pfr_p %x\n", len_w, u3R->all.fre_p[sel_w]);
   while ( 1 ) {
     u3p(u3a_fbox) *pfr_p = &u3R->all.fre_p[sel_w];
-
     while ( 1 ) {
       if ( 0 == *pfr_p ) {
         if ( sel_w < (u3a_fbox_no - 1) ) {
@@ -460,7 +1099,13 @@ _ca_willoc(c3_w len_w, c3_w ald_w, c3_w alp_w)
           ** from the free list.
           */
           siz_w += pad_w;
-          _box_count(-(box_u->siz_w));
+
+          if (box_u->siz_w > c3_ws_MAX) {
+            u3m_bail(c3__exit);
+          }
+          c3_ws siz_ws = (c3_ws) box_u->siz_w; // ok; checked size 
+
+          _box_count(-(siz_ws));
           {
             {
               c3_assert((0 == u3to(u3a_fbox, *pfr_p)->pre_p) ||
@@ -571,50 +1216,6 @@ u3a_wealloc(void* lag_v, c3_w len_w)
       u3a_wfree(lag_v);
       return new_w;
     }
-  }
-}
-/* u3a_push(): allocate space on the road stack
-*/
-void*
-u3a_push(c3_w len_w)
-{
-  void *cur, *top = u3to(void, u3R->cap_p);
-  if ( c3y == u3a_is_north(u3R) ) {
-    top -= len_w;
-    cur = top;
-    u3p(void) cap_p = u3R->cap_p = u3of(void, top);
-    c3_assert(cap_p < u3R->mat_p);
-    c3_assert(cap_p > u3R->hat_p);
-    return cur;
-  }
-  else {
-    cur = top;
-    top += len_w;
-    u3R->cap_p = u3of(void, top);
-    u3p(void) cap_p = u3R->cap_p = u3of(void, top);
-    c3_assert(cap_p > u3R->mat_p);
-    c3_assert(cap_p < u3R->hat_p);
-    return cur;
-  }
-}
-
-/* u3a_pop(): deallocate space on the road stack
-*/
-void
-u3a_pop(c3_w len_w)
-{
-  void* top = u3to(void, u3R->cap_p);
-  if ( c3y == u3a_is_north(u3R) ) {
-    top += len_w;
-    u3p(void) cap_p = u3R->cap_p = u3of(void, top);
-    c3_assert(cap_p <= u3R->mat_p);
-    c3_assert(cap_p > u3R->hat_p);
-  }
-  else {
-    top -= len_w;
-    u3p(void) cap_p = u3R->cap_p = u3of(void, top);
-    c3_assert(cap_p >= u3R->mat_p);
-    c3_assert(cap_p < u3R->hat_p);
   }
 }
 
@@ -748,13 +1349,17 @@ u3a_cellblock(c3_w num_w)
       u3R->all.cel_p = cel_p;
     }
   }
-  _box_count(num_w * u3a_minimum);
+  c3_d siz_d = num_w * u3a_minimum;
+  if (siz_d > c3_ws_MAX){
+    u3m_bail(c3__exit);
+  }
+  _box_count((c3_ws) siz_d); // ok; checked size
   return c3y;
 }
 
 /* u3a_celloc(): allocate a cell.
 */
-c3_w*
+c3_w*  
 u3a_celloc(void)
 {
 #ifdef U3_MEMORY_DEBUG
@@ -780,7 +1385,7 @@ u3a_celloc(void)
   }
 
   {
-    u3a_box* box_u = &(u3to(u3a_fbox, cel_p)->box_u);
+    u3a_box* box_u = &(u3to(u3a_fbox, cel_p)->box_u); // <---- here ???
 
 
     box_u->use_w = 1;
@@ -810,7 +1415,7 @@ u3a_cfree(c3_w* cel_w)
     u3a_box*      box_u = u3a_botox(cel_w);
     u3p(u3a_fbox) fre_p = u3of(u3a_fbox, box_u);
 
-    _box_count(u3a_minimum);
+    _box_count((c3_w) u3a_minimum); // ok
 
     u3to(u3a_fbox, fre_p)->nex_p = u3R->all.cel_p;
     u3R->all.cel_p = fre_p;
@@ -888,7 +1493,7 @@ static void _me_wash_north(u3_noun dog);
 static void
 _me_wash_north_in(u3_noun som)
 {
-  if ( _(u3a_is_cat(som)) ) return;
+  if ( _(u3a_is_direct_l(som)) ) return;
   if ( !_(u3a_north_is_junior(u3R, som)) ) return;
 
   _me_wash_north(som);
@@ -896,17 +1501,16 @@ _me_wash_north_in(u3_noun som)
 static void
 _me_wash_north(u3_noun dog)
 {
-  c3_assert(c3y == u3a_is_dog(dog));
+  c3_assert(c3y == u3a_is_indirect_l(dog));
   // c3_assert(c3y == u3a_north_is_junior(u3R, dog));
   {
     u3a_noun* dog_u = u3a_to_ptr(dog);
 
-    if ( dog_u->mug_w == 0 ) return;
+    if ( dog_u->u.mug_w == 0 ) return;
 
-    dog_u->mug_w = 0;    //  power wash
-    // if ( dog_u->mug_w >> 31 ) { dog_u->mug_w = 0; }
+    dog_u->u.newnoun = 0;    //  power wash
 
-    if ( _(u3a_is_pom(dog)) ) {
+    if ( _(u3a_is_indirect_cell_l(dog)) ) {
       u3a_cell* god_u = (u3a_cell *)(void *)dog_u;
 
       _me_wash_north_in(god_u->hed);
@@ -921,7 +1525,7 @@ static void _me_wash_south(u3_noun dog);
 static void
 _me_wash_south_in(u3_noun som)
 {
-  if ( _(u3a_is_cat(som)) ) return;
+  if ( _(u3a_is_direct_l(som)) ) return;
   if ( !_(u3a_south_is_junior(u3R, som)) ) return;
 
   _me_wash_south(som);
@@ -929,17 +1533,17 @@ _me_wash_south_in(u3_noun som)
 static void
 _me_wash_south(u3_noun dog)
 {
-  c3_assert(c3y == u3a_is_dog(dog));
+  c3_assert(c3y == u3a_is_indirect_l(dog));
   // c3_assert(c3y == u3a_south_is_junior(u3R, dog));
   {
     u3a_noun* dog_u = u3a_to_ptr(dog);
 
-    if ( dog_u->mug_w == 0 ) return;
+    if ( dog_u->u.mug_w == 0 ) return;
 
-    dog_u->mug_w = 0;    //  power wash
+    dog_u->u.mug_w = 0;    //  power wash
     //  if ( dog_u->mug_w >> 31 ) { dog_u->mug_w = 0; }
 
-    if ( _(u3a_is_pom(dog)) ) {
+    if ( u3a_is_indirect_b(dog) ) {
       u3a_cell* god_u = (u3a_cell *)(void *)dog_u;
 
       _me_wash_south_in(god_u->hed);
@@ -953,7 +1557,7 @@ _me_wash_south(u3_noun dog)
 void
 u3a_wash(u3_noun som)
 {
-  if ( _(u3a_is_cat(som)) ) {
+  if ( _(u3a_is_direct_l(som)) ) {
     return;
   }
   if ( _(u3a_is_north(u3R)) ) {
@@ -1037,7 +1641,7 @@ static u3_noun
 _me_copy_north_in(u3_noun som)
 {
   c3_assert(u3_none != som);
-  if ( _(u3a_is_cat(som)) ) {
+  if ( _(u3a_is_direct_l(som)) ) {
     return som;
   }
   else {
@@ -1073,8 +1677,8 @@ _me_copy_north(u3_noun dog)
 
     /* Borrow mug slot to record new destination.
     */
-    if ( dog_u->mug_w >> 31 ) {
-      u3_noun nov = (u3_noun) dog_u->mug_w;
+    if ( u3a_is_indirect_b(dog_u->u.newnoun) ) {   // old magic
+      u3_noun nov = dog_u->u.newnoun;
 
       c3_assert(_(u3a_north_is_normal(u3R, nov)));
       _me_gain_use(nov);
@@ -1082,19 +1686,19 @@ _me_copy_north(u3_noun dog)
       return nov;
     }
     else {
-      if ( c3y == u3a_is_pom(dog) ) {
+      if ( c3y == u3a_is_indirect_cell_l(dog) ) {
         u3a_cell* old_u = u3a_to_ptr(dog);
         c3_w*       new_w = u3a_walloc(c3_wiseof(u3a_cell));
         u3_noun     new   = u3a_de_twin(dog, new_w);
         u3a_cell* new_u = (u3a_cell*)(void *)new_w;
 
-        new_u->mug_w = old_u->mug_w;
+        new_u->u.mug_w = old_u->u.mug_w;
         new_u->hed = _me_copy_north_in(old_u->hed);
         new_u->tel = _me_copy_north_in(old_u->tel);
 
         /* Borrow mug slot to record new destination.
         */
-        old_u->mug_w = new;
+        old_u->u.newnoun = new;
         return new;
       }
       else {
@@ -1103,7 +1707,7 @@ _me_copy_north(u3_noun dog)
         u3_noun     new   = u3a_de_twin(dog, new_w);
         u3a_atom* new_u = (u3a_atom*)(void *)new_w;
 
-        new_u->mug_w = old_u->mug_w;
+        new_u->u.mug_w = old_u->u.mug_w;
         new_u->len_w = old_u->len_w;
         {
           c3_w i_w;
@@ -1113,9 +1717,8 @@ _me_copy_north(u3_noun dog)
           }
         }
 
-        /* Borrow mug slot to record new destination.
-        */
-        old_u->mug_w = new;
+        old_u->u.newnoun = new; 
+
         return new;
       }
     }
@@ -1129,7 +1732,7 @@ static u3_noun
 _me_copy_south_in(u3_noun som)
 {
   c3_assert(u3_none != som);
-  if ( _(u3a_is_cat(som)) ) {
+  if ( _(u3a_is_direct_l(som)) ) {
     return som;
   }
   else {
@@ -1165,8 +1768,8 @@ _me_copy_south(u3_noun dog)
 
     /* Borrow mug slot to record new destination.
     */
-    if ( dog_u->mug_w >> 31 ) {
-      u3_noun nov = (u3_noun) dog_u->mug_w;
+    if ( u3a_is_indirect_b(dog_u->u.newnoun) ) {  // old magic
+      u3_noun nov = dog_u->u.newnoun;
 
       // u3l_log("south: %p is already %p\r\n", dog_u, u3a_to_ptr(nov));
 
@@ -1176,7 +1779,7 @@ _me_copy_south(u3_noun dog)
       return nov;
     }
     else {
-      if ( c3y == u3a_is_pom(dog) ) {
+      if ( c3y == u3a_is_indirect_cell_l(dog) ) {
         u3a_cell* old_u = u3a_to_ptr(dog);
         c3_w*       new_w = u3a_walloc(c3_wiseof(u3a_cell));
         u3_noun     new   = u3a_de_twin(dog, new_w);
@@ -1188,14 +1791,15 @@ _me_copy_south(u3_noun dog)
           u3l_log("BAD: take %p\r\n", new_u);
         }
 #endif
-        new_u->mug_w = old_u->mug_w;
+        new_u->u.mug_w = old_u->u.mug_w;
         // new_u->mug_w = 0;
         new_u->hed = _me_copy_south_in(old_u->hed);
         new_u->tel = _me_copy_south_in(old_u->tel);
 
         /* Borrow mug slot to record new destination.
         */
-        old_u->mug_w = new;
+        old_u->u.newnoun = new;
+
         return new;
       }
       else {
@@ -1206,7 +1810,7 @@ _me_copy_south(u3_noun dog)
 
         // u3l_log("south: atom %p to %p\r\n", old_u, new_u);
 
-        new_u->mug_w = old_u->mug_w;
+        new_u->u.mug_w = old_u->u.mug_w;
         // new_u->mug_w = 0;
         new_u->len_w = old_u->len_w;
         {
@@ -1219,7 +1823,8 @@ _me_copy_south(u3_noun dog)
 
         /* Borrow mug slot to record new destination.
         */
-        old_u->mug_w = new;
+        old_u->u.newnoun = new; 
+
         return new;
       }
     }
@@ -1285,7 +1890,7 @@ u3a_take(u3_noun som)
 {
   c3_assert(u3_none != som);
 
-  if ( _(u3a_is_cat(som)) ) {
+  if ( _(u3a_is_direct_l(som)) ) {
     return som;
   }
   else {
@@ -1305,7 +1910,7 @@ u3a_take(u3_noun som)
 c3_o
 u3a_left(u3_noun som)
 {
-  if ( _(u3a_is_cat(som)) ||
+  if ( _(u3a_is_direct_l(som)) ||
        !_(u3a_is_junior(u3R, som)) )
   {
     return c3y;
@@ -1313,7 +1918,7 @@ u3a_left(u3_noun som)
   else {
     u3a_noun* dog_u = u3a_to_ptr(som);
 
-    return __(0 != (dog_u->mug_w >> 31));
+    return __(0 != u3a_is_indirect_b(dog_u->u.newnoun)); // old magic
   }
 }
 
@@ -1379,16 +1984,16 @@ top:
         u3m_bail(c3__foul);
       }
       else {
-        if ( _(u3a_is_pom(dog)) ) {
+        if ( _(u3a_is_indirect_cell_l(dog)) ) {
           u3a_cell* dog_u = (void *)dog_w;
           u3_noun     h_dog = dog_u->hed;
           u3_noun     t_dog = dog_u->tel;
 
-          if ( !_(u3a_is_cat(h_dog)) ) {
+          if ( !_(u3a_is_direct_l(h_dog)) ) {
             _me_lose_north(h_dog);
           }
           u3a_cfree(dog_w);
-          if ( !_(u3a_is_cat(t_dog)) ) {
+          if ( !_(u3a_is_direct_l(t_dog)) ) {
             dog = t_dog;
             goto top;
           }
@@ -1419,16 +2024,16 @@ top:
         u3m_bail(c3__foul);
       }
       else {
-        if ( _(u3a_is_pom(dog)) ) {
+        if ( _(u3a_is_indirect_cell_l(dog)) ) {
           u3a_cell* dog_u = (void *)dog_w;
           u3_noun     h_dog = dog_u->hed;
           u3_noun     t_dog = dog_u->tel;
 
-          if ( !_(u3a_is_cat(h_dog)) ) {
+          if ( !_(u3a_is_direct_l(h_dog)) ) {
             _me_lose_south(h_dog);
           }
           u3a_cfree(dog_w);
-          if ( !_(u3a_is_cat(t_dog)) ) {
+          if ( !_(u3a_is_direct_l(t_dog)) ) {
             dog = t_dog;
             goto top;
           }
@@ -1449,7 +2054,7 @@ u3a_gain(u3_noun som)
   u3t_on(mal_o);
   c3_assert(u3_none != som);
 
-  if ( !_(u3a_is_cat(som)) ) {
+  if ( !_(u3a_is_direct_l(som)) ) {
     som = _(u3a_is_north(u3R))
               ? _me_gain_north(som)
               : _me_gain_south(som);
@@ -1465,7 +2070,7 @@ void
 u3a_lose(u3_noun som)
 {
   u3t_on(mal_o);
-  if ( !_(u3a_is_cat(som)) ) {
+  if ( !_(u3a_is_direct_l(som)) ) {
     if ( _(u3a_is_north(u3R)) ) {
       _me_lose_north(som);
     } else {
@@ -1480,7 +2085,7 @@ u3a_lose(u3_noun som)
 c3_w
 u3a_use(u3_noun som)
 {
-  if ( _(u3a_is_cat(som)) ) {
+  if ( _(u3a_is_direct_l(som)) ) {
     return 1;
   }
   else {
@@ -1497,7 +2102,7 @@ void
 u3a_luse(u3_noun som)
 {
   if ( 0 == u3a_use(som) ) {
-    u3l_log("luse: insane %d 0x%x\r\n", som, som);
+    u3l_log("luse: insane %ld 0x%lx\r\n", som, som);
     abort();
   }
   if ( _(u3du(som)) ) {
@@ -1696,7 +2301,7 @@ _ca_print_box(u3a_box* box_u)
     //  but it's always safe to print it as if it is one
     //
     u3a_atom* vat_u = (u3a_atom*)box_u;
-    u3_atom   veb   = u3a_to_pug(box_w);
+    u3_atom   veb   = u3a_to_indirect(box_w);
 
     //  skip atoms larger than 10 words
     //  XX print mugs or something
@@ -1722,7 +2327,7 @@ _ca_print_box(u3a_box* box_u)
   else {
     //  box_u is definitely a cell
     //
-    return u3m_pretty(u3a_to_pom(box_w));
+    return u3m_pretty(u3a_to_indirect_cell(box_w));
   }
 }
 
@@ -1736,7 +2341,7 @@ _ca_print_leak(c3_c* cap_c, u3a_box* box_u, c3_w eus_w, c3_w use_w)
   u3l_log("%s: %p mug=%x (marked=%u swept=%u)\r\n",
           cap_c,
           box_u,
-          ((u3a_noun *)(u3a_boxto(box_u)))->mug_w,
+          ((u3a_noun *)(u3a_boxto(box_u)))->u.mug_w,
           eus_w,
           use_w);
 
@@ -1830,7 +2435,7 @@ u3a_sweep(void)
 #ifdef U3_MEMORY_DEBUG
       /* I suspect these printfs fail hilariously in the case
        * of non-direct atoms. We shouldn't unconditionally run
-       * u3a_to_pom(). In general, the condition
+       * u3a_to_indirect_cell(). In general, the condition
        * box_u->siz_w > u3a_minimum is sufficient, but not necessary,
        * for the box to represent an atom.  The atoms between
        * 2^31 and 2^32 are the exceptions.
@@ -1926,7 +2531,8 @@ u3a_slab(c3_w len_w)
   c3_w*     nov_w = u3a_walloc(len_w + c3_wiseof(u3a_atom));
   u3a_atom* pug_u = (void *)nov_w;
 
-  pug_u->mug_w = 0;
+  pug_u->u.mug_w = 0;
+  pug_u->u.newnoun = 0; // redundant to have both but clears all the bits / makes meaning clear
   pug_u->len_w = len_w;
 
   /* Clear teh slab.
@@ -1938,24 +2544,40 @@ u3a_slab(c3_w len_w)
       pug_u->buf_w[i_w] = 0;
     }
   }
-  return pug_u->buf_w;
+  return pug_u->buf_w; // return ptr to data buffer; "leak" the header (we'll recover it later)
 }
 
 /* u3a_slaq(): u3a_slaq() with a defined blocksize.
 */
 c3_w*
-u3a_slaq(c3_g met_g, c3_w len_w)
+u3a_slaq(c3_g met_g, c3_d len_w)
 {
-  return u3a_slab(((len_w << met_g) + 31) >> 5);
+  c3_d size_d = (((c3_d) len_w << met_g) + 31) >> 5; // calculate number of words required to store result (bloq size x num bloqs)
+  if (size_d > c3_w_MAX){
+    u3m_bail(c3__exit);
+  }
+  c3_w size_w = (c3_w) size_d;// ok
+  return u3a_slab(size_w); // malloc space and zero it out; return ptr to buffer field
+}
+
+static u3a_atom * _backup_from_buffer_to_noun_head(c3_w* sal_w)
+{
+  // back up from the data buffer to find the atom's head structure
+  u3a_atom* nov_u =(u3a_atom*) (sal_w - c3_wiseof(u3a_atom) + c3_wiseof(c3_w));
+
+  return(nov_u);
 }
 
 /* u3a_malt(): measure and finish a proto-atom.
+
+               sal_w is a pointer to the buffer inside the atom head
+               structure; we have to back up to find the atom head
 */
 u3_noun
 u3a_malt(c3_w* sal_w)
 {
-  c3_w*       nov_w = (sal_w - c3_wiseof(u3a_atom));
-  u3a_atom* nov_u = (void *)nov_w;
+  // back up from the data buffer to find the atom's head structure
+  u3a_atom* nov_u = _backup_from_buffer_to_noun_head(sal_w);
   c3_w        len_w;
 
   for ( len_w = nov_u->len_w; len_w; len_w-- ) {
@@ -1971,22 +2593,34 @@ u3a_malt(c3_w* sal_w)
 u3_noun
 u3a_moot(c3_w* sal_w)
 {
-  c3_w*     nov_w = (sal_w - c3_wiseof(u3a_atom));
-  u3a_atom* nov_u = (void*)nov_w;
+  // OLD:
+  //  c3_w*     nov_w = (sal_w - c3_wiseof(u3a_atom));
+  //  u3a_atom* nov_u = (void*)nov_w;
+
+  // back up from the data buffer to find the atom's head structure
+  u3a_atom* nov_u = _backup_from_buffer_to_noun_head(sal_w);
+  
   c3_w      len_w = nov_u->len_w;
-  c3_w      las_w = nov_u->buf_w[len_w - 1];
+  c3_w      las_w = nov_u->buf_w[len_w - 1]; // copy
 
   c3_assert(0 != len_w);
   c3_assert(0 != las_w);
 
-  if ( 1 == len_w ) {
-    if ( _(u3a_is_cat(las_w)) ) {
-      u3a_wfree(nov_w);
+  // if we have an atom head structure but the space we malloced is
+  // trivial and can fit in a direct atom then return that direct atom
+  // and free the head structure
 
-      return las_w;
+  // N.B. there is an improvement to be made here bc we can return up to 62 bit directs, not just 32
+  // 
+  if ( 1 == len_w ) {
+    if ( u3a_is_direct_b(las_w) ) {
+      u3a_wfree( (void*) nov_u);  // free the head
+      return las_w;                  // return the copied value as a direct atom 
     }
   }
-  return u3a_to_pug(u3a_outa(nov_w));
+
+  // otherwise move from true pointer to loom index and flip the indirect bit, to generate a proper indirect noun
+  return u3a_to_indirect(u3a_outa(nov_u));
 }
 
 #if 0
@@ -2040,20 +2674,20 @@ u3a_detect(u3_noun fum, u3_noun som)
 u3_noun
 u3a_mint(c3_w* sal_w, c3_w len_w)
 {
-  c3_w*       nov_w = (sal_w - c3_wiseof(u3a_atom));
-  u3a_atom* nov_u = (void*)nov_w;
-
+  u3a_atom* nov_u =  _backup_from_buffer_to_noun_head(sal_w);
+  c3_w*     nov_w = (c3_w*) nov_u;
+  
   /* See if we can free the slab entirely.
   */
   if ( len_w == 0 ) {
-    u3a_wfree(nov_w);
+    u3a_wfree( (void *) nov_u); // free the noun header
 
     return 0;
   }
   else if ( len_w == 1 ) {
     c3_w low_w = nov_u->buf_w[0];
 
-    if ( _(u3a_is_cat(low_w)) ) {
+    if ( _(u3a_is_direct_l(low_w)) ) {
       u3a_wfree(nov_w);
 
       return low_w;
@@ -2069,7 +2703,9 @@ u3a_mint(c3_w* sal_w, c3_w len_w)
     if ( dif_w >= u3a_minimum ) {
       c3_w* box_w = (void *)u3a_botox(nov_w);
       c3_w* end_w = (nov_w + c3_wiseof(u3a_atom) + len_w + 1);
-      c3_w  asz_w = (end_w - box_w);
+      c3_ds asz_ds = (end_w - box_w);
+      if (asz_ds > c3_w_MAX || asz_ds < 0 ) {  u3m_bail(c3__exit); }
+      c3_w  asz_w = (c3_w) asz_ds;  // ok
       c3_w  bsz_w = box_w[0] - asz_w;
 
       _box_attach(_box_make(end_w, bsz_w, 0));
@@ -2079,33 +2715,36 @@ u3a_mint(c3_w* sal_w, c3_w len_w)
     }
     nov_u->len_w = len_w;
   }
-  return u3a_to_pug(u3a_outa(nov_w));
+  return u3a_to_indirect(u3a_outa(nov_w));
 }
 
 #ifdef U3_MEMORY_DEBUG
 /* u3a_lush(): leak push.
 */
-c3_w
-u3a_lush(c3_w lab_w)
+c3_d
+u3a_lush(c3_d lab_d)
 {
-  c3_w cod_w = u3_Code;
+  c3_d cod_d = u3_Code;
 
-  u3_Code = lab_w;
-  return cod_w;
+  if (lab_d > c3_w_MAX) {  u3m_bail(c3__exit); }
+  u3_Code = (c3_w) lab_d;
+  return cod_d;
+
 }
 
 /* u3a_lop(): leak pop.
 */
 void
-u3a_lop(c3_w lab_w)
+u3a_lop(c3_d lab_d)
 {
-  u3_Code = lab_w;
+  if (lab_d > c3_w_MAX) {  u3m_bail(c3__exit); }
+  u3_Code = (c3_w) lab_d;
 }
 #else
 /* u3a_lush(): leak push.
 */
-c3_w
-u3a_lush(c3_w lab_w)
+c3_d
+u3a_lush(c3_d lab_d)
 {
   return 0;
 }
@@ -2113,7 +2752,7 @@ u3a_lush(c3_w lab_w)
 /* u3a_lop(): leak pop.
 */
 void
-u3a_lop(c3_w lab_w)
+u3a_lop(c3_d lab_d)
 {
 }
 #endif

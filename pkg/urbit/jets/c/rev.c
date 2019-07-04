@@ -11,13 +11,15 @@
            u3_atom len,
            u3_atom dat)
   {
-    if ( !_(u3a_is_cat(boz)) || (boz >= 32) ||
-         !_(u3a_is_cat(len)) ) {
+    if ( !_(u3a_is_direct_l(boz)) || (boz >= 32) ||
+         !_(u3a_is_direct_l(len)) ) {
       return u3m_bail(c3__fail);
     }
 
     dat = u3qc_end(boz, len, dat);
-    c3_w met = u3r_met(boz, dat);
+
+    c3_y boz_y = (c3_y) boz; // ok; checked size above
+    c3_w met = u3r_met(boz_y, dat);
     return u3kc_lsh(boz, (len - met), u3kc_swp(boz, dat));
   }
 

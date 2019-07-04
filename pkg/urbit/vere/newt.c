@@ -213,7 +213,7 @@ _newt_alloc(uv_handle_t* had_u,
 {
   void* ptr_v = c3_malloc(len_i);
 
-  *buf_u = uv_buf_init(ptr_v, len_i);
+  *buf_u = uv_buf_init(ptr_v, (c3_d_to_w(len_i)));
 }
 
 /* _newt_read_cb(): stream input callback.
@@ -322,10 +322,10 @@ u3_newt_write(u3_mojo* moj_u,
 
   /* write header; c3_d is futureproofing
   */
-  buf_y[0] = ((len_w >> 0) & 0xff);
-  buf_y[1] = ((len_w >> 8) & 0xff);
-  buf_y[2] = ((len_w >> 16) & 0xff);
-  buf_y[3] = ((len_w >> 24) & 0xff);
+  buf_y[0] = (c3_y)((len_w >> 0) & 0xff);
+  buf_y[1] = (c3_y)((len_w >> 8) & 0xff);
+  buf_y[2] = (c3_y)((len_w >> 16) & 0xff);
+  buf_y[3] = (c3_y)((len_w >> 24) & 0xff);
   buf_y[4] = buf_y[5] = buf_y[6] = buf_y[7] = 0;
   u3r_bytes(0, len_w, buf_y + 8, mat);
   u3z(mat);

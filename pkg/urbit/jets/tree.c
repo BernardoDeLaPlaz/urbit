@@ -557,8 +557,7 @@ static c3_c* _141_pen__al_ha[] = {0};
 #endif
 
 static u3j_core _141_pen_d[] =
-{ { "hex", 7, 0, _141_hex_d, _141_hex_ha },
-
+{ { "hex", 7,   0,           _141_hex_d, _141_hex_ha },
   { "cell", 7, _141_pen_cell_a, 0, _141_pen_cell_ha },
   { "comb", 7, _141_pen_comb_a, 0, _141_pen_comb_ha },
   { "cons", 7, _141_pen_cons_a, 0, _141_pen_cons_ha },
@@ -846,7 +845,9 @@ static c3_c* _141_qua_mule_ha[] = {
 };
 
 static u3j_core _141_qua_d[] =
-{ { "pen", 3, 0, _141_pen_d, _141_pen_ha, _141_pen_ho },
+{
+
+  { "pen", 3, 0, _141_pen_d, _141_pen_ha, _141_pen_ho },
 
   { "po", 7, 0, _141_qua__po_d, _141_qua__po_ha },
 
@@ -1861,7 +1862,8 @@ static u3j_core _d[] = {
 
 u3j_dash
 u3j_Dash = {
-  _d,
-  0,
-  0
+  _d,  // dev_u = static list of cores
+  0,   // len_l = len of static list
+  0    // all_l = allocated len
+       // NOT PRESENT ray_u = dynamic array of cores) "by axis" (?)
 };

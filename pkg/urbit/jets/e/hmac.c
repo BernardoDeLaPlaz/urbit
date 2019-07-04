@@ -15,7 +15,7 @@
             u3_atom wid,
             u3_atom dat)
   {
-    c3_assert(_(u3a_is_cat(boq)) && _(u3a_is_cat(wik)) && _(u3a_is_cat(wid)));
+    c3_assert(_(u3a_is_direct_l(boq)) && _(u3a_is_direct_l(wik)) && _(u3a_is_direct_l(wid)));
 
     // ensure key and message fit signaled lengths
     key = u3qc_end(3, wik, key);
@@ -34,13 +34,13 @@
 
     // pad key, inner and outer
     c3_y trail = (boq % 4);
-    c3_y padwords = (boq / 4) + (trail == 0 ? 0 : 1);
+    c3_y padwords = (c3_y) ((boq / 4) + (trail == 0 ? 0 : 1));
     c3_w innpad[padwords], outpad[padwords];
-    memset(innpad, 0x36, padwords * 4);
-    memset(outpad, 0x5c, padwords * 4);
+    memset(innpad, 0x36, (size_t) padwords * 4);
+    memset(outpad, 0x5c, (size_t) padwords * 4);
     if ( trail > 0 ) {
-      innpad[padwords-1] = 0x36363636 >> (8 * (4 - trail));
-      outpad[padwords-1] = 0x5c5c5c5c >> (8 * (4 - trail));
+      innpad[padwords-1] = 0x36363636U >> (8 * (4 - trail));
+      outpad[padwords-1] = 0x5c5c5c5cU >> (8 * (4 - trail));
     }
     u3_atom innkey = u3kc_mix(u3k(key), u3i_words(padwords, innpad));
     u3_atom outkey = u3kc_mix(    key , u3i_words(padwords, outpad));
@@ -70,14 +70,14 @@
                                u3x_sam_14, &wid,
                                u3x_sam_15, &dat, 0)) ||
          (c3n == u3ud(boq)) ||
-         (c3n == u3a_is_cat(boq)) ||
+         (c3n == u3a_is_direct_l(boq)) ||
          (c3n == u3ud(out)) ||
-         (c3n == u3a_is_cat(out)) ||
+         (c3n == u3a_is_direct_l(out)) ||
          (c3n == u3ud(wik)) ||
-         (c3n == u3a_is_cat(wik)) ||
+         (c3n == u3a_is_direct_l(wik)) ||
          (c3n == u3ud(key)) ||
          (c3n == u3ud(wid)) ||
-         (c3n == u3a_is_cat(wid)) ||
+         (c3n == u3a_is_direct_l(wid)) ||
          (c3n == u3ud(dat)) )
     {
       return u3m_bail(c3__exit);

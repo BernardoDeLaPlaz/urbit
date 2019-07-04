@@ -24,8 +24,8 @@
   _satom_to_mp(mpz_t a_mp,
                u3_atom b)
   {
-    if ( _(u3a_is_cat(b)) ) {
-      c3_ws c = (b + 1) >> 1;
+    if ( _(u3a_is_direct_l(b)) ) {
+      c3_ws c = (c3_ws)  (b + 1) >> 1;
       if ( (b & 1) ) {
         c = -c;
       }
@@ -33,7 +33,7 @@
     }
     else {
       u3r_mp(a_mp, b);
-      c3_t x = mpz_odd_p(a_mp);
+      c3_t x = (c3_t) mpz_odd_p(a_mp);
       mpz_add_ui(a_mp, a_mp, 1);
       mpz_tdiv_q_2exp(a_mp, a_mp, 1);
       if ( x ) {
@@ -80,7 +80,7 @@
       mpz_clear(i);
       u3m_bail(c3__exit);
     }
-    a->precision = mpz_get_ui(i);
+    a->precision = (c3_w) mpz_get_ui(i);
     mpz_clear(i);
 
     if ( a->precision < 2 ) u3m_bail(c3__exit);
@@ -88,13 +88,24 @@
     _satom_to_mp(a->minExp, g);
     u3r_mp(a->expWidth, h);
 
-    if ( !(_(u3a_is_cat(d)) && _(u3a_is_cat(e))) ) {
+    if ( !(_(u3a_is_direct_l(d)) && _(u3a_is_direct_l(e))) ) {
       mpz_clear(a->minExp);
       mpz_clear(a->expWidth);
       u3m_bail(c3__exit);
     }
-    a->rMode = d;
-    a->eMode = e;
+
+    if (d > c3_w_MAX) {
+      u3m_bail(c3__fail);
+    }
+    c3_w d_w = (c3_w) d; // ok; tested size above
+
+    if (e > c3_w_MAX) {
+      u3m_bail(c3__fail);
+    }
+    c3_w e_w = (c3_w) e; // ok; tested size above
+
+    a->rMode = d_w;
+    a->eMode = e_w;
   }
 
   static void
@@ -104,7 +115,7 @@
     u3_atom c, d;
     u3x_cell(b, &c, &d);
 
-    if ( !(_(u3a_is_cat(c))) ) {
+    if ( !(_(u3a_is_direct_l(c))) ) {
       u3m_bail(c3__exit);
     }
 
@@ -127,7 +138,7 @@
   {
     size_t z = mpz_sizeinbase(a->a, 2);
     if ( z >= b->precision ) return;
-    c3_w c = b->precision - z;
+    c3_w c = (c3_w) (b->precision - z);
 
     if ( b->eMode != c3__i ) {
       mpz_t i;
@@ -138,7 +149,7 @@
       }
       else if ( mpz_fits_uint_p(i) )
       {
-        c3_w d = mpz_get_ui(i);
+        c3_w d = (c3_w) mpz_get_ui(i);
         c = c3_min(c, d);
       }
       mpz_clear(i);
@@ -172,7 +183,7 @@
       return u3m_bail(c3__exit);
     }
     c3_w q = 0;
-    c3_w f = (m > d.precision) ? m - d.precision : 0;
+    c3_w f = (c3_w) ((m > d.precision) ? m - d.precision : 0);
     mpz_init(g);
     if ( (d.eMode != c3__i) &&
          (mpz_cmp(c.e, d.minExp) < 0) ) {
@@ -183,7 +194,7 @@
         mpz_clear(c.a); mpz_clear(c.e);
         return u3m_bail(c3__exit);
       }
-      q = mpz_get_ui(g);
+      q = (c3_w) mpz_get_ui(g);
     }
     q = c3_max(f, q);
     mpz_init(v);
@@ -358,7 +369,7 @@
     mpz_init_set_ui(mn, 1);
     mpz_init(i);
     mpz_init(j);
-    c3_w se = mpz_sgn(c.e);
+    c3_ws se = mpz_sgn(c.e);
     if ( se == 1 ) {
       mpz_mul_2exp(r, r, mpz_get_ui(c.e));
       mpz_mul_2exp(mn, mn, mpz_get_ui(c.e));

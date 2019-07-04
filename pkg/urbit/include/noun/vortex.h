@@ -128,7 +128,7 @@
     /* u3v_punt(): dump tank list.
     */
       void
-      u3v_punt(u3_noun blu, c3_l tab_l, u3_noun tac);
+      u3v_punt(u3_noun blu, c3_d tab_d, u3_noun tac);
 
     /* u3v_sway(): print trace.
     */

@@ -61,11 +61,11 @@ _jam_buf_atom(_jam_buf* buf_u, u3_noun a)
     _jam_buf_chop(buf_u, 1, 1);
   }
   else {
-    c3_w b_w   = u3r_met(0, a),
-         c_w   = u3r_met(0, b_w);
+    c3_w b_w   = u3r_met(0, a);  // how big in the input noun?
+    c3_w c_w   = u3r_met(0, b_w);
     c3_assert(c_w <= 32);
-    _jam_buf_chop(buf_u, c_w+1, 1 << c_w);
-    _jam_buf_chop(buf_u, c_w-1, b_w & ((1 << (c_w-1)) - 1));
+    _jam_buf_chop(buf_u, c_w+1, 1UL << c_w);
+    _jam_buf_chop(buf_u, c_w-1, b_w & ((1UL << (c_w-1)) - 1));
     _jam_buf_chop(buf_u, b_w, a);
   }
 }
@@ -83,9 +83,9 @@ _jam_buf_atom(_jam_buf* buf_u, u3_noun a)
     u3p(u3h_root) har_p = u3h_new();
     c3_o          nor_o = u3a_is_north(u3R);
     c3_y          wis_y = c3_wiseof(u3_noun);
-    c3_ys         mov   = ( c3y == nor_o ? -wis_y : wis_y );
-    c3_ys         off   = ( c3y == nor_o ? 0 : -wis_y );
-    u3_noun*      top, *don = u3to(u3_noun, u3R->cap_p + off);
+    c3_ys         mov   = (c3_ys) ( c3y == nor_o ? -wis_y : wis_y );
+    c3_ys         off   = (c3_ys) ( c3y == nor_o ? 0 : -wis_y );
+    u3_noun*      top, *don = u3to(u3_noun,  c3_w_plus_ys( u3R->cap_p, off));
     u3_weak       c;
     c3_o          cel_o;
     c3_w          len_w;
@@ -101,8 +101,8 @@ _jam_buf_atom(_jam_buf* buf_u, u3_noun a)
     buf_u.bit_w = 0;
     memset(buf_u.wor_w, 0, len_w * sizeof(c3_w));
 
-    u3R->cap_p += mov;
-    top         = u3to(u3_noun, u3R->cap_p + off);
+    u3R->cap_p = c3_w_plus_ys(u3R->cap_p, mov);
+    top         = u3to(u3_noun, c3_w_plus_ys(u3R->cap_p, off));
     *top        = a;
 
     while ( top != don ) {
@@ -124,23 +124,23 @@ _jam_buf_atom(_jam_buf* buf_u, u3_noun a)
             _jam_buf_atom(&buf_u, c);
           }
         }
-        u3R->cap_p -= mov;
-        top = u3to(u3_noun, u3R->cap_p + off);
+        u3R->cap_p = c3_w_minus_ys( u3R->cap_p, mov);
+        top = u3to(u3_noun, c3_w_plus_ys( u3R->cap_p, off));
       }
       else {
         u3h_put(har_p, a, buf_u.bit_w);
         if ( c3n == cel_o ) {
           _jam_buf_chop(&buf_u, 1, 0);
           _jam_buf_atom(&buf_u, a);
-          u3R->cap_p -= mov;
-          top = u3to(u3_noun, u3R->cap_p + off);
+          u3R->cap_p = c3_w_minus_ys(u3R->cap_p, mov);
+          top = u3to(u3_noun, c3_w_plus_ys( u3R->cap_p, off) );
         }
         else {
           _jam_buf_chop(&buf_u, 2, 1);
           *top         = u3t(a);
 
-          u3R->cap_p  += mov;
-          top          = u3to(u3_noun, u3R->cap_p + off);
+          u3R->cap_p = c3_w_plus_ys( u3R->cap_p, mov);
+          top          = u3to(u3_noun, c3_w_plus_ys( u3R->cap_p, off));
           *top         = u3h(a);
         }
       }

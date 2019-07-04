@@ -15,11 +15,17 @@
   u3_noun
   u3qe_sha1(u3_atom wid, u3_atom dat)
   {
-    c3_assert(_(u3a_is_cat(wid)));
+    c3_assert(_(u3a_is_direct_l(wid)));
     dat = u3qc_rev(3, wid, dat);
 
     c3_y* fat_y = u3a_malloc(wid + 1);
-    u3r_bytes(0, wid, fat_y, dat);
+
+    if (wid > c3_w_MAX) {
+      u3m_bail(c3__fail);
+    }
+    c3_w wid_w = (c3_w) wid; // ok; tested size above
+
+    u3r_bytes(0, wid_w, fat_y, dat);
     {
       c3_y dig_y[32];
 #if defined(U3_OS_osx)
@@ -48,7 +54,7 @@
 
     if ( (c3n == u3r_mean(cor, u3x_sam_2, &wid, u3x_sam_3, &dat, 0)) ||
          (c3n == u3ud(wid)) ||
-         (c3n == u3a_is_cat(wid)) ||
+         (c3n == u3a_is_direct_l(wid)) ||
          (c3n == u3ud(dat)) )
     {
       return u3m_bail(c3__exit);

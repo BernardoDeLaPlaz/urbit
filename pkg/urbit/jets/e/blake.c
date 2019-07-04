@@ -14,17 +14,20 @@
              u3_atom wik, u3_atom dak,
              u3_atom out)
   {
-    c3_assert(_(u3a_is_cat(wid)) && _(u3a_is_cat(wik)) && _(u3a_is_cat(out)));
+    c3_assert(_(u3a_is_direct_l(wid)) && _(u3a_is_direct_l(wik)) && _(u3a_is_direct_l(out)));
 
     // flip endianness for the internal blake2b function
     dat = u3qc_rev(3, wid, dat);
     dak = u3qc_rev(3, wik, dak);
 
+    c3_w wid_w = (c3_w) wid;
+    c3_w wik_w = (c3_w) wik;
+      
     c3_y* dat_y = (c3_y*)u3a_malloc(wid);
-    u3r_bytes(0, wid, (void*)dat_y, dat);
+    u3r_bytes(0, wid_w, (void*)dat_y, dat);
 
     c3_y* dak_y = (c3_y*)u3a_malloc(wik);
-    u3r_bytes(0, wik, (void*)dak_y, dak);
+    u3r_bytes(0, wik_w, (void*)dak_y, dak);
 
     int ret;
     c3_y out_y[64];
@@ -47,7 +50,11 @@
       return u3m_bail(c3__exit);
     }
 
-    return u3kc_rev(3, out, u3i_bytes(out, out_y));
+    if (out > c3_w_MAX) {
+      u3m_bail(c3__fail);
+    }
+    c3_w out_w = (c3_w) out;  // ok; tested size above
+    return u3kc_rev(3, out, u3i_bytes(out_w, out_y));
   }
 
   u3_noun

@@ -19,7 +19,7 @@
     c3_assert(u3r_met(3, blk) <= 16);
 
     {
-      int i = 15;
+      unsigned int i = 15;
 
       do {
         key_y[i] = u3r_byte(15-i, key);
@@ -27,7 +27,7 @@
       } while (i >= 0);
     }
     {
-      int i = 15;
+      unsigned int i = 15;
 
       do {
         blk_y[i] = u3r_byte(15-i, blk);
@@ -45,8 +45,8 @@
     /*  array reverse - we can write backwards u3i_bytes   *
      *  in the unlikely event that this becomes a problem  */
     {
-      int i = 15;
-      int j = 0;
+      unsigned int i = 15;
+      unsigned int j = 0;
       c3_y tmp;
 
       do {
@@ -86,7 +86,7 @@
     c3_assert(u3r_met(3, blk) <= 16);
 
     {
-      int i = 15;
+      unsigned int i = 15;
 
       do {
         key_y[i] = u3r_byte(15-i, key);
@@ -94,7 +94,7 @@
       } while (i >= 0);
     }
     {
-      int i = 15;
+      unsigned int i = 15;
 
       do {
         blk_y[i] = u3r_byte(15-i, blk);
@@ -112,8 +112,8 @@
     /*  array reverse - we can write backwards u3i_bytes   *
      *  in the unlikely event that this becomes a problem  */
     {
-      int i = 15;
-      int j = 0;
+      unsigned int i = 15;
+      unsigned int j = 0;
       c3_y tmp;
 
       do {
@@ -152,7 +152,7 @@
     c3_assert(u3r_met(3, blk) <= 16);
 
     {
-      int i = 23;
+      unsigned int i = 23;
 
       do {
         key_y[i] = u3r_byte(23-i, key);
@@ -160,7 +160,7 @@
       } while (i >= 0);
     }
     {
-      int i = 15;
+      unsigned int i = 15;
 
       do {
         blk_y[i] = u3r_byte(15-i, blk);
@@ -178,8 +178,8 @@
     /*  array reverse - we can write backwards u3i_bytes   *
      *  in the unlikely event that this becomes a problem  */
     {
-      int i = 15;
-      int j = 0;
+      unsigned int i = 15;
+      unsigned int j = 0;
       c3_y tmp;
 
       do {
@@ -219,7 +219,7 @@
     c3_assert(u3r_met(3, blk) <= 16);
 
     {
-      int i = 23;
+      unsigned int i = 23;
 
       do {
         key_y[i] = u3r_byte(23-i, key);
@@ -227,7 +227,7 @@
       } while (i >= 0);
     }
     {
-      int i = 15;
+      unsigned int i = 15;
 
       do {
         blk_y[i] = u3r_byte(15-i, blk);
@@ -245,8 +245,8 @@
     /*  array reverse - we can write backwards u3i_bytes   *
      *  in the unlikely event that this becomes a problem  */
     {
-      int i = 15;
-      int j = 0;
+      unsigned int i = 15;
+      unsigned int j = 0;
       c3_y tmp;
 
       do {
@@ -285,7 +285,7 @@
     c3_assert(u3r_met(3, blk) <= 16);
 
     {
-      int i = 31;
+      unsigned int i = 31;
 
       do {
         key_y[i] = u3r_byte(31-i, key);
@@ -293,7 +293,7 @@
       } while (i >= 0);
     }
     {
-      int i = 15;
+      unsigned int i = 15;
 
       do {
         blk_y[i] = u3r_byte(15-i, blk);
@@ -311,8 +311,8 @@
     /*  array reverse - we can write backwards u3i_bytes   *
      *  in the unlikely event that this becomes a problem  */
     {
-      int i = 15;
-      int j = 0;
+      unsigned int i = 15;
+      unsigned int j = 0;
       c3_y tmp;
 
       do {
@@ -352,7 +352,7 @@
     c3_assert(u3r_met(3, blk) <= 16);
 
     {
-      int i = 31;
+      unsigned int i = 31;
 
       do {
         key_y[i] = u3r_byte(31-i, key);
@@ -360,7 +360,7 @@
       } while (i >= 0);
     }
     {
-      int i = 15;
+      unsigned int i = 15;
 
       do {
         blk_y[i] = u3r_byte(15-i, blk);
@@ -378,8 +378,8 @@
     /*  array reverse - we can write backwards u3i_bytes   *
      *  in the unlikely event that this becomes a problem  */
     {
-      int i = 15;
-      int j = 0;
+      unsigned int i = 15;
+      unsigned int j = 0;
       c3_y tmp;
 
       do {

@@ -47,7 +47,7 @@ _reck_lily(u3_noun fot, u3_noun txt, c3_l* tid_l)
   if ( c3n == _reck_mole(fot, txt, &ato_d) ) {
     return c3n;
   } else {
-    if ( ato_d >= 0x80000000ULL ) {
+    if ( u3a_is_indirect_b(ato_d) ) {
       return c3n;
     } else {
       *tid_l = (c3_l) ato_d;
@@ -66,10 +66,10 @@ static u3_noun
 _reck_orchid(u3_noun fot, u3_noun txt, c3_l* tid_l)
 {
   c3_c* str = u3r_string(txt);
-  c3_d ato_d = strtol(str, NULL, 10);
+  c3_d ato_d = c3_ds_to_d(strtol(str, NULL, 10));
   free(str);
 
-  if ( ato_d >= 0x80000000ULL ) {
+  if ( u3a_is_indirect_b(ato_d) ) {
     return c3n;
   } else {
     *tid_l = (c3_l) ato_d;
@@ -116,7 +116,7 @@ _reck_kick_term(u3_pier* pir_u, u3_noun pox, c3_l tid_l, u3_noun fav)
     case c3__logo:
     {
       u3_pier_exit(pir_u);
-      u3_Host.xit_i = u3t(fav);
+      u3_Host.xit_i = u3a_noun_to_ws(u3t(fav));
 
       u3z(pox); u3z(fav); return c3y;
     } break;

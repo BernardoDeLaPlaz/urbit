@@ -107,10 +107,10 @@ u3qe_sign(u3_atom has,
   /* convert opaque 65 byte signature into v + [r + s]
      convert endianness while we're at it */
   c3_y rec_y[64];
-  c3_ws v = 0;
+  c3_ws v_ws = 0;
   ret = secp256k1_ecdsa_recoverable_signature_serialize_compact(ctx_u,
                                                                 rec_y,    /* OUT: 64 byte sig (r,s) */
-                                                                & v,      /* OUT: v */
+                                                                & v_ws,      /* OUT: v */
                                                                 & sig_u); /* IN:  65 byte sig */
   if (1 != ret) {
     u3l_log("\rsecp jet: crypto package error\n");
@@ -125,6 +125,8 @@ u3qe_sign(u3_atom has,
   /* package s,r,v signature for return */
   u3_noun s  = u3i_words(8, (const c3_w*) s_y);
   u3_noun r  = u3i_words(8, (const c3_w*) r_y);
+  
+  u3_noun v = (u3_noun) v_ws;
   return (u3nt(v, r, s));
 }
 

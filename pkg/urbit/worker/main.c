@@ -207,7 +207,7 @@ _worker_prof(FILE* fil_u, c3_w den, u3_noun mas)
        * to appear unmarked, but its children should be already
        * marked.
       */
-      if ( _(u3a_is_dog(tt_mas)) ) {
+      if ( _(u3a_is_indirect_l(tt_mas)) ) {
         u3a_box* box_u = u3a_botox(u3a_to_ptr(tt_mas));
 #ifdef U3_MEMORY_DEBUG
         if ( 1 == box_u->eus_w ) {
@@ -651,7 +651,7 @@ _worker_poke_exit(c3_w cod_w)                 //  exit code
     u3t_damp();
   }
 
-  exit(cod_w);
+  exit( c3_w_to_ws(cod_w));
 }
 
 /* _worker_poke_boot(): prepare to boot.
@@ -806,6 +806,21 @@ u3_worker_boot(void)
 c3_i
 main(c3_i argc, c3_c* argv[])
 {
+
+  #if 0
+  volatile int ii = 0; 
+  fprintf(stderr, "****    GDB serf / worker: about to sleep in pkg/urbit/worker/main.c: - PID = %i\n\r", getpid()); 
+  while (ii != 1){
+    fprintf(stderr, "...\n\r");
+    sleep(1); 
+  }
+  fprintf(stderr, "***    GDB serf / worker: post sleep\n");
+  #else 
+  // fprintf(stderr, "****    GDB serf / worker: no attach in main.c\n\r");    
+  #endif
+
+
+  
   uv_loop_t* lup_u = uv_default_loop();
   c3_c*      dir_c = argv[1];
   c3_c*      key_c = argv[2];

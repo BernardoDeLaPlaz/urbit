@@ -30,11 +30,11 @@
                // input params
                u3_atom wid, u3_atom dat, u3_atom wis, u3_atom sat )
   {
-    c3_assert( _(u3a_is_cat(out)) && _(u3a_is_cat(type)) &&
-               _(u3a_is_cat(version)) && _(u3a_is_cat(threads)) &&
-               _(u3a_is_cat(mem_cost)) && _(u3a_is_cat(time_cost)) &&
-               _(u3a_is_cat(wik)) && _(u3a_is_cat(wix)) &&
-               _(u3a_is_cat(wid)) && _(u3a_is_cat(wis)) );
+    c3_assert( _(u3a_is_direct_l(out)) && _(u3a_is_direct_l(type)) &&
+               _(u3a_is_direct_l(version)) && _(u3a_is_direct_l(threads)) &&
+               _(u3a_is_direct_l(mem_cost)) && _(u3a_is_direct_l(time_cost)) &&
+               _(u3a_is_direct_l(wik)) && _(u3a_is_direct_l(wix)) &&
+               _(u3a_is_direct_l(wid)) && _(u3a_is_direct_l(wis)) );
 
     // flip endianness for argon2
     key = u3qc_rev(3, wik, key);
@@ -42,37 +42,61 @@
     dat = u3qc_rev(3, wid, dat);
     sat = u3qc_rev(3, wis, sat);
 
+
+    if (wik > c3_w_MAX) {
+      u3m_bail(c3__fail);
+    }
+    c3_w wik_w = (c3_w) wik; // ok; tested size above
+
+    if (wix > c3_w_MAX) {
+      u3m_bail(c3__fail);
+    }
+    c3_w wix_w = (c3_w) wix; // ok; tested size above
+
+    if (wid > c3_w_MAX) {
+      u3m_bail(c3__fail);
+    }
+    c3_w wid_w = (c3_w) wid; // ok; tested size above
+
+    if (wis > c3_w_MAX) {
+      u3m_bail(c3__fail);
+    }
+    c3_w wis_w = (c3_w) wis; // ok; tested size above
+    
     // atoms to byte arrays
     c3_y bytes_key[wik];
-    u3r_bytes(0, wik, bytes_key, key);
+    u3r_bytes(0, wik_w, bytes_key, key);
     c3_y bytes_extra[wix];
-    u3r_bytes(0, wix, bytes_extra, extra);
+    u3r_bytes(0, wix_w, bytes_extra, extra);
     c3_y bytes_dat[wid];
-    u3r_bytes(0, wid, bytes_dat, dat);
+    u3r_bytes(0, wid_w, bytes_dat, dat);
     c3_y bytes_sat[wis];
-    u3r_bytes(0, wis, bytes_sat, sat);
+    u3r_bytes(0, wis_w, bytes_sat, sat);
 
     c3_y outhash[out];
     argon2_context context = {
-      outhash,             // output array, at least [digest length] in size
-      out,                 // digest length
-      bytes_dat,           // password array
-      wid,                 // password length
-      bytes_sat,           // salt array
-      wis,                 // salt length
-      bytes_key, wik,      // optional secret data
-      bytes_extra, wix,    // optional associated data
-      time_cost, mem_cost, threads, threads, // performance cost configuration
-      version,             // algorithm version
-      argon2_alloc,        // custom memory allocation function
-      argon2_free,         // custom memory deallocation function
-      ARGON2_DEFAULT_FLAGS // by default only internal memory is cleared
+      outhash,                          // output array, at least [digest length] in size
+      (unsigned int) out,               // digest length
+      bytes_dat,                        // password array
+      (unsigned int) wid,               // password length
+      bytes_sat,                        // salt array
+      (unsigned int) wis,               // salt length
+      bytes_key, (unsigned int)  wik,   // optional secret data
+      bytes_extra, (unsigned int)  wix, // optional associated data
+      (unsigned int) time_cost,
+      (unsigned int) mem_cost,
+      (unsigned int) threads,
+      (unsigned int) threads,           // performance cost configuration
+      (unsigned int) version,           // algorithm version
+      argon2_alloc,                     // custom memory allocation function
+      argon2_free,                      // custom memory deallocation function
+      ARGON2_DEFAULT_FLAGS              // by default only internal memory is cleared
     };
 
     int argon_res;
     switch ( type ) {
       default:
-        u3l_log("\nunjetted argon2 variant %i\n", type);
+        u3l_log("\nunjetted argon2 variant %li\n", type);
         u3m_bail(c3__exit);
         break;
       //
@@ -99,7 +123,13 @@
     }
 
     u3z(key); u3z(extra); u3z(dat); u3z(sat);
-    return u3kc_rev(3, out, u3i_bytes(out, outhash));
+
+    if (out > c3_w_MAX) {
+      u3m_bail(c3__fail);
+    }
+    c3_w out_w = (c3_w) out;  // ok; tested size above
+
+    return u3kc_rev(3, out, u3i_bytes(out_w, outhash));
   }
 
   u3_noun

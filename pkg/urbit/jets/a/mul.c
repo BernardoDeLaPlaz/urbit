@@ -10,7 +10,7 @@
   u3qa_mul(u3_atom a,
            u3_atom b)
   {
-    if ( _(u3a_is_cat(a)) && _(u3a_is_cat(b)) ) {
+    if ( _(u3a_is_direct_l(a)) && _(u3a_is_direct_l(b)) ) {
       c3_d c = ((c3_d) a) * ((c3_d) b);
 
       return u3i_chubs(1, &c);

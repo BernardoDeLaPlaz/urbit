@@ -34,7 +34,7 @@
       **    %time               ::  timed out
       **    %oops               ::  assertion failure
       */
-        c3_i
+        u3_noun
         u3m_bail(c3_m how_m) __attribute__((noreturn));
 
       /* u3m_init(): start the environment.
@@ -54,7 +54,7 @@
 
       /* u3m_error(): bail out with %exit, ct_pushing error.
       */
-        c3_i
+        u3_noun
         u3m_error(c3_c* str_c);
 
       /* u3m_hate(): new, integrated leap mechanism (enter).

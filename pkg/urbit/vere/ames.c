@@ -106,10 +106,10 @@ static c3_s
 _ames_czar_port(c3_y imp_y)
 {
   if ( c3n == u3_Host.ops_u.net ) {
-    return 31337 + imp_y;
+    return c3_w_to_s(31337U + imp_y);
   }
   else {
-    return 13337 + imp_y;
+    return c3_w_to_s(13337U + imp_y);
   }
 }
 

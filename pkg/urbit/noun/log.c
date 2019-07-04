@@ -18,7 +18,7 @@ u3l_log(const char* format, ...)
     char msg[4096];
     vsnprintf(msg, 4096, format, myargs);
     u3C.stderr_log_f(msg);
-  } else  {
+  } else { 
     //  this process did not set a logging function, fallback to stderr
     //
     vfprintf(stderr, format, myargs);

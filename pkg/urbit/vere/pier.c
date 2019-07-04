@@ -129,7 +129,7 @@ _pier_disk_commit_request(u3_writ* wit_u)
     c3_d  len_d = u3r_met(6, wit_u->mat);
     c3_d* buf_d = c3_malloc(8 * len_d);
 
-    u3r_chubs(0, len_d, buf_d, wit_u->mat);
+    u3r_chubs(0, c3_d_to_w(len_d), buf_d, wit_u->mat);
     u3_foil_append(_pier_disk_commit_complete,
                    wit_u,
                    log_u->fol_u,
@@ -168,7 +168,7 @@ _pier_disk_write_header(u3_pier* pir_u, u3_atom mat)
   c3_d  len_d = u3r_met(6, mat);
   c3_d* buf_d = c3_malloc(8 * len_d);
 
-  u3r_chubs(0, len_d, buf_d, mat);
+  u3r_chubs(0, c3_d_to_w(len_d), buf_d, mat);
 
   u3_foil_append(_pier_disk_write_header_complete,
                  (void*)0,
@@ -299,7 +299,7 @@ _pier_disk_load_commit(u3_pier* pir_u,
       return;
     }
 
-    mat = u3i_chubs(len_d, buf_d);
+    mat = u3i_chubs(c3_d_to_w(len_d), buf_d);
     c3_free(buf_d);
 
     ovo = u3ke_cue(u3k(mat));
@@ -431,7 +431,7 @@ _pier_disk_init(u3_disk* log_u)
     }
 
     {
-      u3_noun mat = u3i_chubs(len_d, buf_d);
+      u3_noun mat = u3i_chubs(c3_d_to_w(len_d), buf_d);
       u3_noun ovo = u3ke_cue(u3k(mat));
 
       c3_assert(c3__work == u3h(ovo));
@@ -1245,7 +1245,7 @@ _pier_loop_prepare(uv_prepare_t* pep_u)
 static void
 _pier_loop_init(u3_pier* pir_u)
 {
-  c3_l cod_l;
+  c3_d cod_d;
 
   _pier_loop_time();
 
@@ -1253,36 +1253,36 @@ _pier_loop_init(u3_pier* pir_u)
   //
   u3v_numb();
 
-  cod_l = u3a_lush(c3__ames);
+  cod_d = u3a_lush(c3__ames);
   u3_ames_io_init(pir_u);
-  u3a_lop(cod_l);
+  u3a_lop(cod_d);
 
-  cod_l = u3a_lush(c3__behn);
+  cod_d = u3a_lush(c3__behn);
   u3_behn_io_init(pir_u);
-  u3a_lop(cod_l);
+  u3a_lop(cod_d);
 
-  cod_l = u3a_lush(c3__unix);
+  cod_d = u3a_lush(c3__unix);
   u3_unix_io_init(pir_u);
-  u3a_lop(cod_l);
+  u3a_lop(cod_d);
 
-  cod_l = u3a_lush(c3__save);
+  cod_d = u3a_lush(c3__save);
   u3_save_io_init(pir_u);
-  u3a_lop(cod_l);
+  u3a_lop(cod_d);
 
   //  XX legacy handlers, not yet scoped to a pier
   //
   {
-    cod_l = u3a_lush(c3__term);
+    cod_d = u3a_lush(c3__term);
     u3_term_io_init();
-    u3a_lop(cod_l);
+    u3a_lop(cod_d);
 
-    cod_l = u3a_lush(c3__http);
+    cod_d = u3a_lush(c3__http);
     u3_http_io_init();
-    u3a_lop(cod_l);
+    u3a_lop(cod_d);
 
-    cod_l = u3a_lush(c3__cttp);
+    cod_d = u3a_lush(c3__cttp);
     u3_cttp_io_init();
-    u3a_lop(cod_l);
+    u3a_lop(cod_d);
   }
 }
 
@@ -1291,34 +1291,34 @@ _pier_loop_init(u3_pier* pir_u)
 static void
 _pier_loop_wake(u3_pier* pir_u)
 {
-  c3_l cod_l;
+  c3_d cod_d;
 
-  cod_l = u3a_lush(c3__unix);
+  cod_d = u3a_lush(c3__unix);
   u3_unix_io_talk(pir_u);
   u3_unix_ef_bake(pir_u);
-  u3a_lop(cod_l);
+  u3a_lop(cod_d);
 
-  cod_l = u3a_lush(c3__ames);
+  cod_d = u3a_lush(c3__ames);
   u3_ames_io_talk(pir_u);
   u3_ames_ef_bake(pir_u);
-  u3a_lop(cod_l);
+  u3a_lop(cod_d);
 
-  cod_l = u3a_lush(c3__behn);
+  cod_d = u3a_lush(c3__behn);
   u3_behn_ef_bake(pir_u);
-  u3a_lop(cod_l);
+  u3a_lop(cod_d);
 
   //  XX legacy handlers, not yet scoped to a pier
   //
   {
-    cod_l = u3a_lush(c3__http);
+    cod_d = u3a_lush(c3__http);
     u3_http_io_talk();
     u3_http_ef_bake();
-    u3a_lop(cod_l);
+    u3a_lop(cod_d);
 
-    cod_l = u3a_lush(c3__term);
+    cod_d = u3a_lush(c3__term);
     u3_term_io_talk();
     u3_term_ef_bake();
-    u3a_lop(cod_l);
+    u3a_lop(cod_d);
   }
 }
 
@@ -1327,38 +1327,38 @@ _pier_loop_wake(u3_pier* pir_u)
 static void
 _pier_loop_exit(u3_pier* pir_u)
 {
-  c3_l cod_l;
+  c3_d cod_d;
 
-  cod_l = u3a_lush(c3__unix);
+  cod_d = u3a_lush(c3__unix);
   u3_unix_io_exit(pir_u);
-  u3a_lop(cod_l);
+  u3a_lop(cod_d);
 
-  cod_l = u3a_lush(c3__ames);
+  cod_d = u3a_lush(c3__ames);
   u3_ames_io_exit(pir_u);
-  u3a_lop(cod_l);
+  u3a_lop(cod_d);
 
-  cod_l = u3a_lush(c3__save);
+  cod_d = u3a_lush(c3__save);
   u3_save_io_exit(pir_u);
-  u3a_lop(cod_l);
+  u3a_lop(cod_d);
 
-  cod_l = u3a_lush(c3__behn);
+  cod_d = u3a_lush(c3__behn);
   u3_behn_io_exit(pir_u);
-  u3a_lop(cod_l);
+  u3a_lop(cod_d);
 
   //  XX legacy handlers, not yet scoped to a pier
   //
   {
-    cod_l = u3a_lush(c3__term);
+    cod_d = u3a_lush(c3__term);
     u3_term_io_exit();
-    u3a_lop(cod_l);
+    u3a_lop(cod_d);
 
-    cod_l = u3a_lush(c3__http);
+    cod_d = u3a_lush(c3__http);
     u3_http_io_exit();
-    u3a_lop(cod_l);
+    u3a_lop(cod_d);
 
-    cod_l = u3a_lush(c3__cttp);
+    cod_d = u3a_lush(c3__cttp);
     u3_cttp_io_exit();
-    u3a_lop(cod_l);
+    u3a_lop(cod_d);
   }
 }
 
@@ -1370,7 +1370,7 @@ _pier_boot_set_ship(u3_pier* pir_u, u3_noun who, u3_noun fak)
   c3_assert( c3y == u3ud(who) );
   c3_assert( (c3y == fak) || (c3n == fak) );
 
-  c3_o fak_o = fak;
+  c3_o fak_o = u3a_noun_to_o(fak);
   c3_d who_d[2];
 
   u3r_chubs(0, 2, who_d, who);
@@ -2006,13 +2006,15 @@ _pier_tape(FILE* fil_u, u3_noun tep)
   u3_noun tap = tep;
 
   while ( c3y == u3du(tap) ) {
-    c3_c car_c;
+    c3_y car_y;
 
     if ( u3h(tap) >= 127 ) {
-      car_c = '?';
-    } else car_c = u3h(tap);
+      car_y = '?';
+    } else {
+      car_y = u3a_noun_to_y(u3h(tap));
+    } 
 
-    putc(car_c, fil_u);
+    putc( (char) car_y, fil_u);
     tap = u3t(tap);
   }
   u3z(tep);
@@ -2058,12 +2060,12 @@ void
 u3_pier_punt(c3_l tab_l, u3_noun tac)
 {
   u3_noun blu   = u3_term_get_blew(0);
-  c3_l    col_l = u3h(blu);
+  c3_d    col_d = u3h(blu);
   u3_noun cat   = tac;
 
   //  We are calling nock here, but hopefully need no protection.
   //
-  while ( c3y == u3r_du(cat) ) {
+  while ( c3y == u3a_is_indirect_cell_l(cat) ) {
     if ( 0 == u3A->roc ) {
       u3_noun act = u3h(cat);
 
@@ -2084,7 +2086,7 @@ u3_pier_punt(c3_l tab_l, u3_noun tac)
       }
     }
     else {
-      u3_noun wol = u3dc("wash", u3nc(tab_l, col_l), u3k(u3h(cat)));
+      u3_noun wol = u3dc("wash", u3nc(tab_l, col_d), u3k(u3h(cat)));
 
       _pier_wall(wol);
     }

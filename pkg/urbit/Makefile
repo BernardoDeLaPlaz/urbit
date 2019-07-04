@@ -15,7 +15,12 @@ worker_objs = $(shell echo $(worker) | sed 's/\.c/.o/g')
 
 all_objs = $(common_objs) $(daemon_objs) $(worker_objs)
 all_srcs = $(common) $(daemon) $(worker)
-all_exes = ./hash_tests ./hashtable_tests ./urbit ./urbit-worker
+all_exes = ./noun_tests ./hash_tests ./hashtable_tests ./urbit ./urbit-worker
+
+# -Werror promotes all warnings that are enabled into errors (this is on)
+# -Wconversion warns on all casts that might lose data. DO NOT TURN THIS OFF. Use explicit cast funcs in allocate.h.
+# -Wall issues all types of errors.  This is off (for now)
+CFLAGS := $(CFLAGS) -Werror -Wconversion
 
 ################################################################################
 
@@ -25,7 +30,8 @@ all_exes = ./hash_tests ./hashtable_tests ./urbit ./urbit-worker
 
 all: urbit urbit-worker hashtable_tests hash_tests
 
-test: hashtable_tests hash_tests
+test: noun_tests hashtable_tests hash_tests
+	./noun_tests
 	./hashtable_tests
 	./hash_tests
 
@@ -36,6 +42,10 @@ mrproper: clean
 	rm -f config.mk include/config.h
 
 ################################################################################
+
+noun_tests: $(common_objs) tests/noun_tests.o
+	@echo CC -o $@
+	@$(CC) $^ $(LDFLAGS) -o $@
 
 hashtable_tests: $(common_objs) tests/hashtable_tests.o
 	@echo CC -o $@

@@ -10,16 +10,16 @@
   u3qb_reap(u3_atom a,
             u3_noun b)
   {
-    if ( !_(u3a_is_cat(a)) ) {
+    if ( !_(u3a_is_direct_l(a)) ) {
       return u3m_bail(c3__fail);
     }
     else {
       u3_noun acc = u3_nul;
-      c3_w i_w = a;
+      c3_d i_d = a;
 
-      while ( i_w ) {
+      while ( i_d ) {
         acc = u3nc(u3k(b), acc);
-        i_w--;
+        i_d--;
       }
 
       return acc;

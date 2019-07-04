@@ -7,47 +7,46 @@
 /* functions
 */
   u3_noun
-  u3qc_cut(u3_atom a,
-           u3_atom b,
-           u3_atom c,
-           u3_atom d)
+  u3qc_cut(u3_atom bloqsize, // bloq size (2^a)	  
+           u3_atom skipcount, // skip count		  
+           u3_atom inclcount, // include count	  
+           u3_atom d) // input data          
   {
-    if ( !_(u3a_is_cat(a)) || (a >= 32) ) {
+    if ( ! u3a_is_direct_b(bloqsize) || (bloqsize >= 32) ) {   // we only work on small bloq sizes
       return u3m_bail(c3__fail);
     }
-    if ( !_(u3a_is_cat(b)) ) {
+    if ( ! u3a_is_direct_b(skipcount) ) {   // we only work with direct skip count
       return 0;
     }
-    if ( !_(u3a_is_cat(c)) ) {
-      c = 0x7fffffff;
+    if ( !u3a_is_direct_b(inclcount) ) {  // we only work with direct include count
+      inclcount = 0x7fffffff;             // if indirect, replace with a very large size instead
     }
 
-    {
-      c3_g a_g   = a;
-      c3_w b_w   = b;
-      c3_w c_w   = c;
-      c3_w len_w = u3r_met(a_g, d);
+    c3_g bloqsize_g   = (c3_g) bloqsize;  //  cast size down from 8 bytes to 1 (ok bc we test size above)
+    c3_d skipcount_d  = skipcount;  
+    c3_d inclcount_d  = inclcount; 
+    c3_w len_w = u3r_met(bloqsize_g, d);  // find length of input data, in bloqs
 
-      if ( (0 == c_w) || (b_w >= len_w) ) {
-        return 0;
-      }
-      if ( b_w + c_w > len_w ) {
-        c_w = (len_w - b_w);
-      }
-      if ( (b_w == 0) && (c_w == len_w) ) {
-        return u3k(d);
-      }
-      else {
-        c3_w* sal_w = u3a_slaq(a_g, c_w);
-
-        if ( 0 == sal_w ) {
-          return u3m_bail(c3__fail);
-        }
-        u3r_chop(a_g, b_w, c_w, 0, sal_w, d);
-
-        return u3a_malt(sal_w);
-      }
+    if ( (0 == inclcount_d) || (skipcount_d >= len_w) ) {  // if include is 0, or skip is bigger than the data ...
+      return 0;
     }
+    if ( skipcount_d + inclcount_d > len_w ) { // if include slice hangs off end of data ...
+      inclcount_d = (len_w - skipcount_d);
+    }
+    if ( (skipcount_d == 0) && (inclcount_d == len_w) ) {  // if return the whole thing? then return the whole thing
+      return u3k(d);
+    }
+    else {
+      c3_w* sal_w = u3a_slaq(bloqsize_g, inclcount_d);   // malloc space to hold an atom (proto-atom at this stage)
+
+      if ( 0 == sal_w ) {
+        return u3m_bail(c3__fail);
+      }
+      u3r_chop(bloqsize_g, (c3_w) skipcount_d, (c3_w)  inclcount_d, 0, sal_w, d);
+
+      return u3a_malt(sal_w);
+    }
+
   }
   u3_noun
   u3wc_cut(u3_noun cor)

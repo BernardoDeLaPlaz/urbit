@@ -11,15 +11,18 @@
            u3_atom b,
            u3_atom c)
   {
-    if ( !_(u3a_is_cat(a)) || (a >= 32) ) {
+    if ( !_(u3a_is_direct_l(a)) || (a >= 32) ) {
       return u3m_bail(c3__fail);
     }
-    else if ( !_(u3a_is_cat(b)) ) {
+    else if ( !_(u3a_is_direct_l(b)) ) {
       return 0;
     }
+    else if ( b > (1 << 31) )  {
+      return u3m_bail(c3__fail);
+    }
     else {
-      c3_g a_g   = a;
-      c3_w b_w   = b;
+      c3_g a_g   = (c3_g) a; // ok; tested size above
+      c3_w b_w   = (c3_w) b; // ok; tested size above
       c3_w len_w = u3r_met(a_g, c);
 
       if ( b_w >= len_w ) {

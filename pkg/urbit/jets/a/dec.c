@@ -19,7 +19,7 @@
       return u3m_error("decrement-underflow");
     }
     else {
-      if ( _(u3a_is_cat(a)) ) {
+      if ( _(u3a_is_direct_l(a)) ) {
         return a - 1;
       }
       else {

@@ -11,11 +11,11 @@
            u3_atom b,
            u3_atom c)
   {
-    if ( !_(u3a_is_cat(a)) || (a >= 32) ) {
+    if ( !_(u3a_is_direct_l(a)) || (a >= 32) ) {
       return u3m_bail(c3__fail);
     }
     else {
-      c3_g   a_g = a;
+      c3_g   a_g = (c3_g) a; // ok; we checked size above
       c3_w   lew_w = u3r_met(a_g, b);
       c3_w   ler_w = u3r_met(a_g, c);
       c3_w   all_w = (lew_w + ler_w);

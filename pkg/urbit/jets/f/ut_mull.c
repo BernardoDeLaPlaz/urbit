@@ -30,7 +30,7 @@
     return ret;
   }
 
-  static u3_noun
+  u3_noun
   _mull_feel(u3_noun van,
              u3_noun sut,
              u3_noun rot)
@@ -775,8 +775,8 @@
       case c3__zpvt: u3x_trel(u3t(gen), &p_gen, &q_gen, &r_gen);
       _mull_used();
       {
-        c3_o fes = _mull_feel(van, sut, p_gen);
-        c3_o fed = _mull_feel(van, dox, p_gen);
+        c3_o fes = (c3_o) _mull_feel(van, sut, p_gen);
+        c3_o fed = (c3_o) _mull_feel(van, dox, p_gen);
 
         if ( fes != fed ) {
           return u3m_error("mull-bonk-f");

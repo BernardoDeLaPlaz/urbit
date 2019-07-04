@@ -34,11 +34,15 @@
 
     /* Size in words.
     */
-#     define c3_wiseof(x)  (((sizeof (x)) + 3) >> 2)
+#     define c3_wiseof(x)  ((c3_w) (((sizeof (x)) + 3) >> 2))
 
     /* Bit counting.
     */
-#     define c3_bits_word(w) ((w) ? (32 - __builtin_clz(w)) : 0)
+
+    c3_w c3_bits_w(c3_w w);
+    c3_w c3_bits_d(c3_d d);
+
+
 
     /* Min and max.
     */

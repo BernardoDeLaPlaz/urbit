@@ -1,11 +1,11 @@
 #include "all.h"
 
 u3_noun u3qc_rip(u3_atom bloq, u3_atom b) {
-  if ( !_(u3a_is_cat(bloq)) || (bloq >= 32) ) {
+  if ( !_(u3a_is_direct_l(bloq)) || (bloq >= 32) ) {
     return u3m_bail(c3__fail);
   }
 
-  c3_g bloq_g = bloq;
+  c3_g bloq_g = (c3_g) bloq; // ok, we checked size above
 
   /*
     This is a fast-path for the case where all the resulting blocks will
@@ -15,8 +15,8 @@ u3_noun u3qc_rip(u3_atom bloq, u3_atom b) {
     u3_noun acc     = u3_nul;
 
     c3_w met_w   = u3r_met(bloq_g, b);                  //  num blocks in atom
-    c3_w nbits_w = 1 << bloq_g;                         //  block size in bits
-    c3_w bmask_w = (1 << nbits_w) - 1;                  //  result mask
+    c3_w nbits_w = (c3_w) (1 << bloq_g);                //  block size in bits
+    c3_w bmask_w = (c3_w)((1 << nbits_w) - 1);          //  result mask
 
     for ( c3_w i_w = 0; i_w < met_w; i_w++ ) {          //  `i_w` is block index
       c3_w nex_w = i_w + 1;                             //  next block
@@ -36,8 +36,8 @@ u3_noun u3qc_rip(u3_atom bloq, u3_atom b) {
   u3_noun acc   = u3_nul;
   c3_w    met_w = u3r_met(bloq_g, b);
   c3_w    len_w = u3r_met(5, b);
-  c3_g    san_g = (bloq_g - 5);
-  c3_w    san_w = 1 << san_g;
+  c3_g    san_g = (c3_g)(bloq_g - 5);
+  c3_w    san_w = (c3_w) (1 << san_g);
   c3_w    dif_w = (met_w << san_g) - len_w;
   c3_w    tub_w = ((dif_w == 0) ? san_w : (san_w - dif_w));
 

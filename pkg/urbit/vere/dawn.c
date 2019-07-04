@@ -13,11 +13,11 @@
 static uv_buf_t
 _dawn_oct_to_buf(u3_noun oct)
 {
-  if ( c3n == u3a_is_cat(u3h(oct)) ) {
+  if ( c3n == u3a_is_direct_l(u3h(oct)) ) {
     exit(1);
   }
 
-  c3_w len_w  = u3h(oct);
+  c3_w len_w  = u3a_noun_to_w(u3h(oct));
   c3_y* buf_y = c3_malloc(1 + len_w);
   buf_y[len_w] = 0;
 
@@ -34,11 +34,11 @@ _dawn_buf_to_oct(uv_buf_t buf_u)
 {
   u3_noun len = u3i_words(1, (c3_w*)&buf_u.len);
 
-  if ( c3n == u3a_is_cat(len) ) {
+  if ( c3n == u3a_is_direct_l(len) ) {
     exit(1);
   }
 
-  return u3nc(len, u3i_bytes(buf_u.len, (const c3_y*)buf_u.base));
+  return u3nc(len, u3i_bytes( c3_d_to_w(buf_u.len), (const c3_y*)buf_u.base));
 }
 
 

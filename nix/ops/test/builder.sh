@@ -1,5 +1,6 @@
 source $stdenv/setup
 
+echo "XXX-1"
 set -ex
 
 cp -r $SHIP ./ship
@@ -64,3 +65,5 @@ mkdir $out
 cp test-renders-output   $out/renders
 cp test-cores-output     $out/cores
 cp test-generator-output $out/generator
+
+echo "********** DONE: nix/ops/test/builder.sh"

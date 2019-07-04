@@ -25,22 +25,51 @@ static int _crypto_scrypt(const uint8_t *, size_t, const uint8_t *, size_t,
   {
     // asserting that n is power of 2 in _crypto_scrypt
     if (!(_(u3a_is_atom(p)) && _(u3a_is_atom(s)) &&
-          _(u3a_is_cat(pl)) && _(u3a_is_cat(sl)) &&
-          _(u3a_is_cat(n))  && _(u3a_is_cat(r))  &&
-          _(u3a_is_cat(z))  && _(u3a_is_cat(d))  &&
+          _(u3a_is_direct_l(pl)) && _(u3a_is_direct_l(sl)) &&
+          _(u3a_is_direct_l(n))  && _(u3a_is_direct_l(r))  &&
+          _(u3a_is_direct_l(z))  && _(u3a_is_direct_l(d))  &&
            (r != 0)         &&  (z != 0)         &&
            (((c3_d)r * 128 * ((c3_d)n + z - 1)) <= (1 << 30))))
         return u3m_bail(c3__exit);
 
     c3_y* b_p = u3a_malloc(pl + 1); c3_y* b_s= u3a_malloc(sl + 1);
-    u3r_bytes(0, pl, b_p, p);       u3r_bytes(0, sl, b_s, s);
-    b_p[pl] = 0; b_s[sl]=0;
+
+    if (pl > c3_w_MAX) {
+      u3m_bail(c3__fail);
+    }
+    c3_w pl_w = (c3_w) pl; // ok; tested size above
+
+    if (sl > c3_w_MAX) {
+      u3m_bail(c3__fail);
+    }
+    c3_w sl_w = (c3_w) sl; // ok; tested size above
+
+    if (r > c3_w_MAX) {
+      u3m_bail(c3__fail);
+    }
+    c3_w r_w = (c3_w) r; // ok; tested size above
+
+    if (z > c3_w_MAX) {
+      u3m_bail(c3__fail);
+    }
+    c3_w z_w = (c3_w) z; // ok; tested size above
+
+    if (d > c3_w_MAX) {
+      u3m_bail(c3__fail);
+    }
+    c3_w d_w = (c3_w) d; // ok; tested size above
+
+    
+    
+    u3r_bytes(0, pl_w, b_p, p);
+    u3r_bytes(0, sl_w, b_s, s);
+    b_p[pl_w] = 0; b_s[sl_w]=0;
     c3_y* buf = u3a_malloc(d);
 
-    if (_crypto_scrypt(b_p, pl, b_s, sl, n, r, z, buf, d) != 0)
+    if (_crypto_scrypt(b_p, pl, b_s, sl, n, r_w, z_w, buf, d) != 0)
         return u3m_bail(c3__exit);
 
-    u3_noun res = u3i_bytes(d, buf);
+    u3_noun res = u3i_bytes(d_w, buf);
     u3a_free(b_p); u3a_free(b_s); u3a_free(buf);
 
     return res;
@@ -68,8 +97,8 @@ static int _crypto_scrypt(const uint8_t *, size_t, const uint8_t *, size_t,
   {
     // asserting that n is power of 2 in _crypto_scrypt
     if (!(_(u3a_is_atom(p)) && _(u3a_is_atom(s)) &&
-          _(u3a_is_cat(n))  && _(u3a_is_cat(r))  &&
-          _(u3a_is_cat(z))  && _(u3a_is_cat(d))  &&
+          _(u3a_is_direct_l(n))  && _(u3a_is_direct_l(r))  &&
+          _(u3a_is_direct_l(z))  && _(u3a_is_direct_l(d))  &&
            (r != 0)         &&  (z != 0)         &&
            (((c3_d)r * 128 * ((c3_d)n + z - 1)) <= (1 << 30))))
         return u3m_bail(c3__exit);
@@ -80,10 +109,26 @@ static int _crypto_scrypt(const uint8_t *, size_t, const uint8_t *, size_t,
     b_p[pl] = 0; b_s[sl]=0;
     c3_y* buf = u3a_malloc(d);
 
-    if (_crypto_scrypt(b_p, pl, b_s, sl, n, r, z, buf, d) != 0)
+    if (r > c3_w_MAX) {
+      u3m_bail(c3__fail);
+    }
+    c3_w r_w = (c3_w) r; // ok; tested size above
+
+    if (z > c3_w_MAX) {
+      u3m_bail(c3__fail);
+    }
+    c3_w z_w = (c3_w) z; // ok; tested size above
+
+    if (d > c3_w_MAX) {
+      u3m_bail(c3__fail);
+    }
+    c3_w d_w = (c3_w) d; // ok; tested size above
+
+    
+    if (_crypto_scrypt(b_p, pl, b_s, sl, n, r_w, z_w, buf, d) != 0)
         return u3m_bail(c3__exit);
 
-    u3_noun res = u3i_bytes(d, buf);
+    u3_noun res = u3i_bytes(d_w, buf);
     u3a_free(b_p); u3a_free(b_s); u3a_free(buf);
 
     return res;
@@ -108,20 +153,39 @@ static int _crypto_scrypt(const uint8_t *, size_t, const uint8_t *, size_t,
             u3_atom d)
   {
     if (!(_(u3a_is_atom(p)) && _(u3a_is_atom(s)) &&
-          _(u3a_is_cat(pl)) && _(u3a_is_cat(sl)) &&
-          _(u3a_is_cat(c))  && _(u3a_is_cat(d))  &&
+          _(u3a_is_direct_l(pl)) && _(u3a_is_direct_l(sl)) &&
+          _(u3a_is_direct_l(c))  && _(u3a_is_direct_l(d))  &&
            (d <= (1 << 30)) &&  (c <= (1 << 28)) &&
            (c != 0)))
         return u3m_bail(c3__exit);
 
+
+    if (pl > c3_w_MAX) {
+      u3m_bail(c3__fail);
+    }
+    c3_w pl_w = (c3_w) pl; // ok; tested size above
+
+    if (sl > c3_w_MAX) {
+      u3m_bail(c3__fail);
+    }
+    c3_w sl_w = (c3_w) sl; // ok; tested size above
+
+    
     c3_y* b_p = u3a_malloc(pl + 1); c3_y* b_s= u3a_malloc(pl + 1);
-    u3r_bytes(0, pl, b_p, p);       u3r_bytes(0, sl, b_s, s);
+    u3r_bytes(0, pl_w, b_p, p);
+    u3r_bytes(0, sl_w, b_s, s);
     b_p[pl] = 0; b_s[sl]=0;
     c3_y* buf = u3a_malloc(d);
 
     libscrypt_PBKDF2_SHA256(b_p, pl, b_s, sl, c, buf, d);
 
-    u3_noun res = u3i_bytes(d, buf);
+    if (d > c3_w_MAX) {
+      u3m_bail(c3__fail);
+    }
+    c3_w d_w = (c3_w) d; // ok; tested size above
+
+    
+    u3_noun res = u3i_bytes(d_w, buf);
     u3a_free(b_p); u3a_free(b_s); u3a_free(buf);
 
     return res;
@@ -143,7 +207,7 @@ static int _crypto_scrypt(const uint8_t *, size_t, const uint8_t *, size_t,
   u3qes_pbk(u3_atom p, u3_atom s, u3_atom c, u3_atom d)
   {
     if (!(_(u3a_is_atom(p)) && _(u3a_is_atom(s)) &&
-          _(u3a_is_cat(c))  && _(u3a_is_cat(d))  &&
+          _(u3a_is_direct_l(c))  && _(u3a_is_direct_l(d))  &&
            (d <= (1 << 30)) &&  (c <= (1 << 28)) &&
            (c != 0)))
         return u3m_bail(c3__exit);
@@ -156,7 +220,12 @@ static int _crypto_scrypt(const uint8_t *, size_t, const uint8_t *, size_t,
 
     libscrypt_PBKDF2_SHA256(b_p, pl, b_s, sl, c, buf, d);
 
-    u3_noun res = u3i_bytes(d, buf);
+    if (d > c3_w_MAX) {
+      u3m_bail(c3__fail);
+    }
+    c3_w d_w = (c3_w) d; // ok; tested size above
+
+    u3_noun res = u3i_bytes(d_w, buf);
     u3a_free(b_p); u3a_free(b_s); u3a_free(buf);
 
     return res;
@@ -182,9 +251,15 @@ static int _crypto_scrypt(const uint8_t *, size_t, const uint8_t *, size_t,
  * Return 0 on success; or -1 on error.
  */
 static int
-_crypto_scrypt(const uint8_t * passwd, size_t passwdlen,
-    const uint8_t * salt, size_t saltlen, uint64_t N, uint32_t r, uint32_t p,
-    uint8_t * buf, size_t buflen)
+_crypto_scrypt(const uint8_t * passwd,
+               size_t passwdlen,
+               const uint8_t * salt,
+               size_t saltlen,
+               uint64_t N,
+               uint32_t r,
+               uint32_t p,
+               uint8_t * buf,
+               size_t buflen)
 {
 	return libscrypt_scrypt(passwd, passwdlen, salt, saltlen, N, r, p, buf, buflen);
 }

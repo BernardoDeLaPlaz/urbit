@@ -166,7 +166,7 @@ _daemon_fate(void *vod_p, u3_noun mat)
   void (*next)(u3_noun);
 
   c3_assert(_(u3a_is_cell(fate)));
-  c3_assert(_(u3a_is_cat(u3h(fate))));
+  c3_assert(_(u3a_is_direct_l(u3h(fate))));
 
   switch ( u3h(fate) ) {
     case c3__auth:
@@ -211,7 +211,7 @@ _daemon_wyrd(u3_noun ship_wyrd)
   u3z(ship_wyrd);
 
   c3_assert(_(u3a_is_cell(wyrd)));
-  c3_assert(_(u3a_is_cat(u3h(wyrd))));
+  c3_assert(_(u3a_is_direct_l(u3h(wyrd))));
 
   switch ( u3h(wyrd) ) {
     case c3__susp:
@@ -256,7 +256,7 @@ _daemon_doom(u3_noun doom)
   void (*next)(u3_noun);
 
   c3_assert(_(u3a_is_cell(doom)));
-  c3_assert(_(u3a_is_cat(u3h(doom))));
+  c3_assert(_(u3a_is_direct_l(u3h(doom))));
 
   switch ( u3h(doom) ) {
     case c3__boot:
@@ -290,7 +290,7 @@ _daemon_boot(u3_noun bul)
 
   c3_assert(_(u3a_is_cell(bul)));
   u3x_trel(bul, &boot, &pill, &path);
-  c3_assert(_(u3a_is_cat(u3h(boot))));
+  c3_assert(_(u3a_is_direct_l(u3h(boot))));
 
   switch ( u3h(boot) ) {
     case c3__fake: {
@@ -472,7 +472,8 @@ _daemon_get_atom(c3_c* url_c)
 
   curl_easy_cleanup(curl);
 
-  return u3i_bytes(buf_u.len, (const c3_y*)buf_u.base);
+  return u3i_bytes(c3_sizet_to_w(buf_u.len),
+                   (const c3_y*)buf_u.base);
 }
 
 /* _get_cmd_output(): Run a shell command and capture its output.
@@ -489,7 +490,7 @@ _get_cmd_output(c3_c *cmd_c, c3_c *out_c, c3_w len_c)
     exit(1);
   }
 
-  if ( NULL == fgets(out_c, len_c, fp) ) {
+  if ( NULL == fgets(out_c, c3_w_to_ws(len_c), fp) ) {
     u3l_log("'%s' produced no output\n", cmd_c);
     exit(1);
   }
@@ -837,9 +838,12 @@ u3_daemon_commence()
   {
     u3_noun lit;
 
-    if ( 0 != u3_Host.ops_u.lit_c ) {
+    // -J command line flag specifies file location for ivory pill
+    if ( 0 != u3_Host.ops_u.lit_c ) { 
       lit = u3m_file(u3_Host.ops_u.lit_c);
     }
+    
+    // but if not specified, use the compiled in one
     else {
       extern c3_w u3_Ivory_length_w;
       extern c3_y u3_Ivory_pill_y[];

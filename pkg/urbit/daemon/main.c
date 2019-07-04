@@ -33,7 +33,7 @@ static u3_noun
 _main_readw(const c3_c* str_c, c3_w max_w, c3_w* out_w)
 {
   c3_c* end_c;
-  c3_w  par_w = strtoul(str_c, &end_c, 0);
+  c3_w  par_w = c3_d_to_w(strtoul(str_c, &end_c, 0));
 
   if ( *str_c != '\0' && *end_c == '\0' && par_w < max_w ) {
     *out_w = par_w;
@@ -163,7 +163,7 @@ _main_getopt(c3_i argc, c3_c** argv)
       case 'p': {
         if ( c3n == _main_readw(optarg, 65536, &arg_w) ) {
           return c3n;
-        } else u3_Host.ops_u.por_s = arg_w;
+        } else u3_Host.ops_u.por_s = c3_w_to_s(arg_w);
         break;
       }
       case 'R': {
@@ -558,6 +558,26 @@ c3_i
 main(c3_i   argc,
      c3_c** argv)
 {
+    
+  #if 0
+  {
+    volatile int ii = 0;
+    volatile char * s = "fred";
+    fprintf(stderr, "****    GDB king / daemon: sleep in pkg/urbit/daemon/main.c\n\r");
+    fprintf(stderr, "****              PID = %i\n\r", getpid()); 
+    while (ii != 1){
+      fprintf(stderr, " ...\n\r");
+      sleep(1); 
+    }
+    fprintf(stderr, "***    GDB king / daemon: post sleep\n");
+  }
+  #else 
+  // fprintf(stderr, "****    GDB king / daemon: no attach in main.c\n\r");    
+  #endif
+
+  
+
+
   //  Parse options.
   //
   if ( c3n == _main_getopt(argc, argv) ) {
@@ -566,12 +586,12 @@ main(c3_i   argc,
   }
 
   //  Set `u3_Host.wrk_c` to the worker executable path.
-  c3_i worker_exe_len = 1 + strlen(argv[0]) + strlen("-worker");
+  size_t  worker_exe_len = c3_sizet_to_w(1 + strlen(argv[0]) + strlen("-worker"));
   u3_Host.wrk_c = c3_malloc(worker_exe_len);
   snprintf(u3_Host.wrk_c, worker_exe_len, "%s-worker", argv[0]);
 
   // Set TERMINFO_DIRS environment variable
-  c3_i terminfo_len = 1 + strlen(argv[0]) + strlen("-terminfo");
+  size_t terminfo_len = 1U + strlen(argv[0]) + strlen("-terminfo");
   c3_c terminfo_dir[terminfo_len];
   snprintf(terminfo_dir, terminfo_len, "%s-terminfo", argv[0]);
   setenv("TERMINFO_DIRS", terminfo_dir, 1);
@@ -626,7 +646,7 @@ main(c3_i   argc,
   // with a memory-allocation loop
   //
   if (abs_c == NULL) {
-    c3_i mprint_i = 1000;
+    size_t mprint_i = 1000;
     abs_c = c3_malloc(mprint_i);
 
     // allocates more memory as needed if the path is too large
@@ -650,7 +670,7 @@ main(c3_i   argc,
 
   //  Seed prng. Don't panic -- just for fuzz testing.
   //
-  srand(getpid());
+  srand((unsigned int) getpid());
 
   //  Instantiate process globals.
   {

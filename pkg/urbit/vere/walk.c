@@ -50,10 +50,10 @@ u3_walk_safe(c3_c* pas_c)
     // u3l_log("%s: %s\n", pas_c, strerror(errno));
     return 0;
   }
-  fln_w = buf_b.st_size;
-  pad_y = c3_malloc(buf_b.st_size);
+  fln_w = c3_ds_to_w(buf_b.st_size);
+  pad_y = c3_malloc( c3_ds_to_sizet(buf_b.st_size));
 
-  red_w = read(fid_i, pad_y, fln_w);
+  red_w = c3_ssizet_to_w(read(fid_i, pad_y, fln_w));
   close(fid_i);
 
   if ( fln_w != red_w ) {
@@ -82,10 +82,10 @@ u3_walk_load(c3_c* pas_c)
     u3l_log("%s: %s\n", pas_c, strerror(errno));
     return u3m_bail(c3__fail);
   }
-  fln_w = buf_b.st_size;
-  pad_y = c3_malloc(buf_b.st_size);
+  fln_w = c3_ds_to_w(buf_b.st_size);
+  pad_y = c3_malloc(c3_ds_to_sizet(buf_b.st_size));
 
-  red_w = read(fid_i, pad_y, fln_w);
+  red_w = c3_ssizet_to_w(read(fid_i, pad_y, fln_w));
   close(fid_i);
 
   if ( fln_w != red_w ) {
@@ -114,7 +114,7 @@ _walk_mkdirp(c3_c* bas_c, u3_noun pax)
   }
 
   pax_w = u3r_met(3, u3h(pax));
-  fas_w = strlen(bas_c);
+  fas_w = c3_sizet_to_w(strlen(bas_c));
   len_w = 1 + fas_w + pax_w;
 
   pax_c = c3_malloc(1 + len_w);
@@ -158,7 +158,7 @@ u3_walk_save(c3_c* pas_c, u3_noun tim, u3_atom pad, c3_c* bas_c, u3_noun pax)
   u3z(pad);
   u3z(pax);
 
-  rit_w = write(fid_i, pad_y, fln_w);
+  rit_w = c3_ssizet_to_w(write(fid_i, pad_y, fln_w));
   close(fid_i);
   free(pad_y);
 
@@ -208,7 +208,7 @@ _walk_in(const c3_c* dir_c, c3_w len_w)
     }
     else {
       c3_c*  fil_c = out_n->d_name;
-      c3_w   lef_w = len_w + 1 + strlen(fil_c);
+      c3_w   lef_w = len_w + 1U + c3_sizet_to_w(strlen(fil_c));
       c3_c*  pat_c = c3_malloc(lef_w + 1);
       struct stat buf_b;
 
@@ -281,7 +281,7 @@ u3_walk(const c3_c* dir_c, u3_noun old)
     }
     else {
       return u3nc(c3n,
-                  _walk_in(dir_c, strlen(dir_c)));
+                  _walk_in(dir_c, c3_sizet_to_w(strlen(dir_c))));
     }
   }
 }
@@ -296,7 +296,7 @@ u3_path(c3_o fyl, u3_noun pax)
 
   //  measure
   //
-  len_w = strlen(u3_Local);
+  len_w = c3_sizet_to_w(strlen(u3_Local));
   {
     u3_noun wiz = pax;
 

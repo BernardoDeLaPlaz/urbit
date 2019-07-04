@@ -38,8 +38,8 @@
     u3x_cell(zyc, &p_zyc, &q_zyc);
     u3x_cell(naz, &p_naz, &q_naz);
 
-    if ( !_(u3a_is_cat(p_zyc)) || !_(u3a_is_cat(q_zyc)) ||
-         !_(u3a_is_cat(p_naz)) || !_(u3a_is_cat(q_naz)) )
+    if ( !_(u3a_is_direct_l(p_zyc)) || !_(u3a_is_direct_l(q_zyc)) ||
+         !_(u3a_is_direct_l(p_naz)) || !_(u3a_is_direct_l(q_naz)) )
     {
       return u3m_bail(c3__fail);
     } else {
@@ -739,9 +739,9 @@
       u3_noun iq_tub = u3h(q_tub);
 
       u3x_cell(zep, &p_zep, &q_zep);
-      if ( _(u3a_is_cat(p_zep)) &&
-           _(u3a_is_cat(q_zep)) &&
-           _(u3a_is_cat(iq_tub)) )
+      if ( _(u3a_is_direct_l(p_zep)) &&
+           _(u3a_is_direct_l(q_zep)) &&
+           _(u3a_is_direct_l(iq_tub)) )
       {
         if ( (iq_tub >= p_zep) && (iq_tub <= q_zep) ) {
           return _next(tub);
@@ -820,12 +820,12 @@
   _stew_wor(u3_noun ort,
             u3_noun wan)
   {
-    if ( !_(u3a_is_cat(ort)) ) {
+    if ( !_(u3a_is_direct_l(ort)) ) {
       return u3m_bail(c3__fail);
     }
     else {
       if ( c3n == u3du(wan) ) {
-        if ( !_(u3a_is_cat(wan)) ) {
+        if ( !_(u3a_is_direct_l(wan)) ) {
           return u3m_bail(c3__fail);
         }
         else return (ort < wan) ? c3y : c3n;
@@ -833,7 +833,7 @@
       else {
         u3_noun h_wan = u3h(wan);
 
-        if ( !_(u3a_is_cat(h_wan)) ) {
+        if ( !_(u3a_is_direct_l(h_wan)) ) {
           return u3m_bail(c3__fail);
         }
         else return (ort < h_wan) ? c3y : c3n;
@@ -854,7 +854,7 @@
     else {
       u3_noun iq_tub = u3h(q_tub);
 
-      if ( !_(u3a_is_cat(iq_tub)) ) {
+      if ( !_(u3a_is_direct_l(iq_tub)) ) {
         return u3m_bail(c3__fail);
       }
       else while ( 1 ) {
@@ -876,8 +876,8 @@
             u3_noun hpn_hel = u3h(pn_hel);
             u3_noun tpn_hel = u3t(pn_hel);
 
-            if ( !_(u3a_is_cat(hpn_hel)) ||
-                 !_(u3a_is_cat(tpn_hel)) ) {
+            if ( !_(u3a_is_direct_l(hpn_hel)) ||
+                 !_(u3a_is_direct_l(tpn_hel)) ) {
               return _fail(tub);
             }
             else bit_o = __((iq_tub >= hpn_hel) && (iq_tub <= tpn_hel));

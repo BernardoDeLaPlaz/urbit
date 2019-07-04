@@ -94,14 +94,25 @@ u3v_load(u3_noun pil)
 u3_noun
 u3v_lite(u3_noun pil)
 {
-  u3_noun lyf = u3nt(2, u3nc(0, 3), u3nc(0, 2));
-  u3_noun arv = u3ke_cue(pil);
+  u3_noun lyf = u3nt(2, u3nc(0, 3), u3nc(0, 2));    // build a simple Nock program
+  // [ 2 [0 3]  [0 2] ]
+  // this is Nock opcode 2 (eval 2nd argument as a function applied to 1st argument (data) )
+  //     1st arg:  [0 3]  (i.e. the data is found at axis 3 in the tree)
+  //     2nd arg:  [0 2]  (i.e. the function is found at axis 2 in the tree)
+  // or, restated: the pill is a program with both data and code.
+  //
+  // But the pill is not self-executing, we need to build this
+  // 'eval()' micro-wrapper which we will run with the pill as our
+  // subject.
+  //
+  u3_noun arv = u3ke_cue(pil);   // 'pil' is a simple bignum ; turn it into a tree 'arv' by cue-ing
   u3_noun bot, cor, pro;
 
-  u3x_trel(arv, &bot, 0, 0);
+  u3x_trel(arv, &bot, 0, 0);  // 'arv'  is a [ a b c ] ('a' at axis 2, 'b' at 6, 'c' at 7)
+                              // retrieve the subtree at axis 2 and put it in 'bot' 
 
   u3l_log("lite: arvo formula %x\r\n", u3r_mug(arv));
-  cor = u3n_nock_on(bot, lyf);
+  cor = u3n_nock_on(bot, lyf);  // invoke the 'lyf' bootloader on 'bot' plucked from axis 2 of pill
   u3l_log("lite: core %x\r\n", u3r_mug(cor));
 
   pro = u3k(u3r_at(7, cor));
@@ -111,34 +122,6 @@ u3v_lite(u3_noun pil)
   return pro;
 }
 
-//  XX deprecated, remove
-#if 0
-/* u3v_boot(): correct bootstrap sequence.
-*/
-void
-u3v_boot(c3_c* pas_c)
-{
-  u3_noun pru;
-
-  if ( !u3A->sys ) {
-    u3A->sys = u3m_file(pas_c);
-  }
-
-  pru = u3m_soft(0, u3v_load, u3k(u3A->sys));
-
-  if ( u3h(pru) != 0 ) {
-    u3l_log("boot failed\r\n");
-    exit(1);
-  }
-
-  u3l_log("boot: final state %x\r\n", u3r_mug(u3t(pru)));
-
-  u3A->ken = 0;
-  u3A->roc = u3k(u3t(pru));
-
-  u3z(pru);
-}
-#endif
 
 /* u3v_boot_lite(): light bootstrap sequence, just making a kernel.
 */
@@ -148,7 +131,7 @@ u3v_boot_lite(u3_atom lit)
   u3_noun pru = u3m_soft(0, u3v_lite, lit);
 
   if ( u3h(pru) != 0 ) {
-    u3l_log("boot failed\r\n");
+    u3l_log("boot failed (vortex)\r\n");
     exit(1);
   }
 
@@ -387,53 +370,6 @@ u3v_peek(u3_noun hap)
   return u3m_soft_sure(_cv_nock_peek, hap);
 }
 
-#if 0
-/* _cv_mole(): parse simple atomic mole.
-*/
-static c3_o
-_cv_mole(u3_noun  fot,
-         u3_noun  san,
-         c3_d*    ato_d)
-{
-  u3_noun uco = u3do("slay", san);
-  u3_noun p_uco, q_uco, r_uco, s_uco;
-
-  if ( (c3n == u3r_qual(uco, &p_uco, &q_uco, &r_uco, &s_uco)) ||
-       (0 != p_uco) ||
-       (0 != q_uco) ||
-       (c3n == u3r_sing(fot, r_uco)) )
-  {
-    u3l_log("strange mole %s\n", u3r_string(san)));
-
-    u3z(fot); u3z(uco); return c3n;
-  }
-  else {
-    *ato_d = u3r_chub(0, s_uco);
-
-    u3z(fot); u3z(uco); return c3y;
-  }
-}
-
-/* _cv_lily(): parse little atom.
-*/
-static c3_o
-_cv_lily(u3_noun fot, u3_noun txt, c3_l* tid_l)
-{
-  c3_d ato_d;
-
-  if ( c3n == _cv_mole(fot, txt, &ato_d) ) {
-    return c3n;
-  } else {
-    if ( ato_d >= 0x80000000ULL ) {
-      return c3n;
-    } else {
-      *tid_l = (c3_l) ato_d;
-
-      return c3y;
-    }
-  }
-}
-#endif
 
 /* u3v_poke(): insert and apply an input ovum (protected).
 */
@@ -454,18 +390,15 @@ u3v_tank(u3_noun blu, c3_l tab_l, u3_noun tac)
 /* u3v_punt(): dump tank list.
 */
 void
-u3v_punt(u3_noun blu, c3_l tab_l, u3_noun tac)
+u3v_punt(u3_noun blu, c3_d tab_d, u3_noun tac)
 {
-#if 0
-  u3_noun blu   = u3_term_get_blew(0);
-#endif
-  c3_l    col_l = u3h(blu);
+  c3_d    col_d = u3h(blu);
   u3_noun cat   = tac;
 
   //  We are calling nock here, but hopefully need no protection.
   //
-  while ( c3y == u3r_du(cat) ) {
-    u3_noun wol = u3dc("wash", u3nc(tab_l, col_l), u3k(u3h(cat)));
+  while ( c3y == u3a_is_indirect_cell_l(cat) ) {
+    u3_noun wol = u3dc("wash", u3nc(tab_d, col_d), u3k(u3h(cat)));
 
     u3m_wall(wol);
     cat = u3t(cat);
@@ -484,37 +417,6 @@ u3v_sway(u3_noun blu, c3_l tab_l, u3_noun tax)
   u3v_punt(blu, tab_l, u3k(u3t(mok)));
   u3z(mok);
 }
-
-//  XX deprecated, remove
-#if 0
-/* u3v_plan(): queue ovum (external).
-*/
-void
-u3v_plan(u3_noun pax, u3_noun fav)
-{
-  u3_noun egg = u3nc(pax, fav);
-  u3A->roe = u3nc(u3nc(u3_nul, egg), u3A->roe);
-}
-#endif
-
-//  XX deprecated, remove
-#if 0
-/* u3v_plow(): queue multiple ova (external).
-*/
-void
-u3v_plow(u3_noun ova)
-{
-  u3_noun ovi = ova;
-
-  while ( u3_nul != ovi ) {
-    u3_noun ovo=u3h(ovi);
-
-    u3v_plan(u3k(u3h(ovo)), u3k(u3t(ovo)));
-    ovi = u3t(ovi);
-  }
-  u3z(ova);
-}
-#endif
 
 /* _cv_mark_ova(): mark ova queue.
 */

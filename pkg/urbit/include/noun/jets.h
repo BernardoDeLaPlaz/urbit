@@ -65,8 +65,8 @@
         c3_c*             cos_c;        //  control string
         c3_l              axe_l;        //  axis to parent
         struct _u3j_harm* arm_u;        //  blank-terminated static list
-        struct _u3j_core* dev_u;        //  blank-terminated static list
-        c3_c**            bas_u;        //  blank-terminated static list
+        struct _u3j_core* dev_u;        //  blank-terminated static list of cores (C data structure re jets)
+        c3_c**            bas_u;        //  blank-terminated static list of ... crypto hashes?
         struct _u3j_hood* huc_u;        //  blank-terminated static list
         struct _u3j_core* par_u;        //  dynamic parent pointer
         c3_l              jax_l;        //  index in global dashboard
@@ -271,3 +271,4 @@
       */
         void
         u3j_free(void);
+

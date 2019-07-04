@@ -33,8 +33,13 @@
     /* Word axis macros.  For 31-bit axes only.
     */
       /* u3x_dep(): number of axis bits.
-      */
-#       define u3x_dep(a_w)   (c3_bits_word(a_w) - 1)
+	   * 
+	   *  i.e. number of significant bits, minus 1  (0 wraps around) 
+       */
+
+#       define u3x_dep(a_w)   ( (c3_w) (c3_bits_w(a_w) - 1))  // cast is OK bc bits will always be >= 0
+
+#       define u3x_dep_d(a_d)   ( (c3_w) (c3_bits_d(a_d) - 1))  // cast is OK bc bits will always be >= 0
 
       /* u3x_cap(): root axis, 2 or 3.
       */
@@ -46,7 +51,7 @@
       */
 #       define u3x_mas(a_w) ({                        \
           c3_assert( 1 < a_w );                       \
-          ( (a_w & ~(1 << u3x_dep(a_w))) | (1 << (u3x_dep(a_w) - 1)) ); })
+          ( (a_w & ~(1U << u3x_dep(a_w))) | (1U << (u3x_dep(a_w) - 1U)) ); })
 
       /* u3x_peg(): connect two axes.
       */
@@ -57,19 +62,17 @@
   **/
     /** u3x_*: read, but bail with c3__exit on a crash.
     **/
-#if 1
+#if 0
 #     define u3x_h(som)  u3a_h(som)
 #     define u3x_t(som)  u3a_t(som)
 #else
       /* u3x_h (u3h): head.
       */
-        u3_noun
-        u3x_h(u3_noun som);
+        static u3_noun u3x_h(u3_noun som){ return(u3a_h(som)); }
 
       /* u3x_t (u3t): tail.
       */
-        u3_noun
-        u3x_t(u3_noun som);
+        static u3_noun u3x_t(u3_noun som){ return(u3a_t(som)); }
 #endif
       /* u3x_good(): test for u3_none.
       */

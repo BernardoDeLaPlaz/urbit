@@ -70,8 +70,8 @@ u3_time_msc_out(c3_d ufc_d)
 u3_atom
 u3_time_in_tv(struct timeval* tim_tv)
 {
-  c3_w unx_w = tim_tv->tv_sec;
-  c3_w usc_w = tim_tv->tv_usec;
+  c3_w unx_w = c3_ds_to_w(tim_tv->tv_sec);
+  c3_w usc_w = c3_ds_to_w(tim_tv->tv_usec);
   c3_d cub_d[2];
 
   cub_d[0] = u3_time_fsc_in(usc_w);

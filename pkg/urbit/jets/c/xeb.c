@@ -11,7 +11,7 @@
   {
     c3_w met_w = u3r_met(0, a);
 
-    if ( !_(u3a_is_cat(met_w)) ) {
+    if ( !_(u3a_is_direct_l(met_w)) ) {
       return u3i_words(1, &met_w);
     }
     else return met_w;
