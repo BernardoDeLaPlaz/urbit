@@ -2610,15 +2610,20 @@ u3a_moot(c3_w* sal_w)
   // trivial and can fit in a direct atom then return that direct atom
   // and free the head structure
 
-  // N.B. there is an improvement to be made here bc we can return up to 62 bit directs, not just 32
-  // 
   if ( 1 == len_w ) {
-    if ( u3a_is_direct_b(las_w) ) {
       u3a_wfree( (void*) nov_u);  // free the head
       return las_w;                  // return the copied value as a direct atom 
+  }
+
+  if ( 2 == len_w  ) {
+    u3_noun ret = u3_noun_build_from_two_w(nov_u->buf_w[1], nov_u->buf_w[0]);
+    if (u3a_is_direct_b(ret)){
+      u3a_wfree( (void*) nov_u);   // free the head
+      return ret;                  // return the copied value as a direct atom
     }
   }
 
+  
   // otherwise move from true pointer to loom index and flip the indirect bit, to generate a proper indirect noun
   return u3a_to_indirect(u3a_outa(nov_u));
 }

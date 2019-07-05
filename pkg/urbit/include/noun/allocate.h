@@ -10,7 +10,7 @@
 // the debugger to inspect nouns (e.g. u3a_is_direct_b( ...) 
 // (b) you can single step into the functions
 //
-#define DEBUGGABLE_NOUNS 0
+#define DEBUGGABLE_NOUNS 1
 
 //  In the code we cavalierly convert from 8 byte noun to 4 byte word,
 //  from word to noun, from signed to unsigned, etc.
@@ -26,7 +26,7 @@
 //  TESTED_TYPECASTS = 0 gives quick / dumb explicit casts
 //  TESTED_TYPECASTS = 1 gives runtime-checked casts to make sure values are in legal range
 
-#define TESTED_TYPECASTS 0
+#define TESTED_TYPECASTS 1
 
 
 /**  Constants.
@@ -243,6 +243,8 @@
 
 #     define u3_noun_bot_w(non)        ((c3_w) (non & u3_noun_bottommask))
 #     define u3_noun_top_w_downshift(non) ((c3_w) ((non & u3_noun_topmask) >> 32))
+
+#     define u3_noun_build_from_two_w(a, b)  (((u3_noun)(a)) << 32 | (b))                         // may have polluted meta bits - check!
 
     // level 1 - direct tests of flag bits, returning booleans { 0 | 1 }
 
